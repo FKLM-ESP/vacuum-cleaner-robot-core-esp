@@ -1,7 +1,11 @@
 #include "mbed.h"
+#include "TCPSocket.h"
+#include "ESP8266Interface.h"
 
 DigitalOut led1(LED1);
 DigitalIn button(USER_BUTTON);
+
+ESP8266Interface wifi(PC_6, PC_7);
 
 enum control_mode {automatic, manual} mode;
 
@@ -41,9 +45,14 @@ int main()
 {
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     
+    // TODO: Connect to WI-FI
     mode = manual;
+    
+    TCPSocket socket;
 
     while (true){
+        // If not connected to WI-FI -> retry (blocking)
+        // else, listne for commands and run state machine
         switch(mode){
             case manual:
                 led1 = true;
