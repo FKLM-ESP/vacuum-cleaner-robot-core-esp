@@ -9,6 +9,27 @@
    - rewritten writeReg, readReg and scan class methods using methods of I2C class
 */
 
+/*
+USAGE:
+
+#include "IMU_BMX160.h"
+
+// imu object ready to use
+I2C imu_i2c(I2C_SDA, I2C_SCL);
+IMU_BMX160 imu(&imu_i2c);
+
+sBmx160SensorData_t mag, gyr, acc;
+
+// Get data from IMU
+imu.getAllData(&mag, &gyr, &acc);  // You can pass 0 to the sensors you don't need
+// Display the magnetometer, gyroscope and accelerometeer results (in uT, g, m/s^2)
+printf("M X: %f  %f  %f  uT\n", mag.x, mag.y, mag.z);
+printf("G X: %f  %f  %f  g\n", gyr.x, gyr.y, gyr.z);
+printf("A X: %f  %f  %f  m/s^2\n", acc.x, acc.y, acc.z);
+printf("\n");
+
+*/
+
 #include "IMU_BMX160.h"
 
 IMU_BMX160::IMU_BMX160(I2C *pWire)
