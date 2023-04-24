@@ -12,7 +12,7 @@
 #include "I2C.h"
 #include "mbed.h"
 
-#define LITTLE_ENDIAN 1
+#define LITTLE_ENDIAN_IMU 1
 
 /** Mask definitions */
 #define BMX160_ACCEL_BW_MASK 0x70
@@ -702,7 +702,7 @@ typedef enum
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t outputEn : 1;   /**< To enable either INT1 or INT2 pin as output. 0- output disabled ,1- output enabled */
   uint16_t outputMode : 1; /**< 0 - push-pull 1- open drain,only valid if outputEn is set 1 */
   uint16_t outputType : 1; /**< 0 - active low , 1 - active high level.if outputEn is 1,this applies to interrupts,else PMU_trigger */
@@ -725,7 +725,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t tapThr : 5;     /**< tap threshold */
   uint16_t tapShock : 1;   /**< tap shock */
   uint16_t tapQuiet : 1;   /**< tap quiet */
@@ -748,7 +748,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint8_t anymotionEn : 1;      /**< 1 any-motion enable, 0 - any-motion disable */
   uint8_t anymotionX : 1;       /**< slope interrupt x, 1 - enable, 0 - disable */
   uint8_t anymotionY : 1;       /**< slope interrupt y, 1 - enable, 0 - disable */
@@ -773,7 +773,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint8_t sigMotSkip : 2;  /**< skip time of sig-motion interrupt */
   uint8_t sigMotProof : 2; /**< proof time of sig-motion interrupt */
   uint8_t sigDataSrc : 1;  /**< data source 0- filter & 1 pre-filter*/
@@ -794,7 +794,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t stepDetectorEn : 1;   /**< 1- step detector enable, 0- step detector disable */
   uint16_t minThreshold : 2;     /**< minimum threshold */
   uint16_t steptimeMin : 3;      /**< minimal detectable step time */
@@ -815,7 +815,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t noMotionX : 1;   /**< no motion interrupt x */
   uint16_t noMotionY : 1;   /**< no motion interrupt y */
   uint16_t noMotionZ : 1;   /**< no motion interrupt z */
@@ -840,7 +840,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t orientMode : 2;     /**< thresholds for switching between the different orientations */
   uint16_t orientBlocking : 2; /**< blocking_mode */
   uint16_t orientHyst : 4;     /**< Orientation interrupt hysteresis */
@@ -865,7 +865,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint16_t flatTheta : 6;    /**< flat threshold */
   uint16_t flatHy : 3;       /**< flat interrupt hysteresis */
   uint16_t flatHoldTime : 2; /**< delay time for which the flat value must remain stable for the flat interrupt to be generated */
@@ -884,7 +884,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint8_t lowDur;         /**< low-g interrupt trigger delay */
   uint8_t lowThres;       /**< low-g interrupt trigger threshold */
   uint8_t lowHyst : 2;    /**< hysteresis of low-g interrupt */
@@ -907,7 +907,7 @@ typedef struct
  */
 typedef struct
 {
-#if LITTLE_ENDIAN == 1
+#if LITTLE_ENDIAN_IMU == 1
   uint8_t high_g_x : 1;    /**< High-g interrupt x, 1 - enable, 0 - disable */
   uint8_t high_g_y : 1;    /**< High-g interrupt y, 1 - enable, 0 - disable */
   uint8_t high_g_z : 1;    /**< High-g interrupt z, 1 - enable, 0 - disable */

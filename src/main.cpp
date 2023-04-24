@@ -3,14 +3,23 @@
 #include "TCPSocket.h"
 #include "ESP8266Interface.h"
 
+#include "IMU_BMX160.h"
+
+
 // communicationvariables
 ESP8266Interface wifi(PC_6, PC_7);
 #define WIFI_SSID "ssid"
 #define WIFI_PASSWORD "pass"
 #define PORT 9000
 
+//IMU
+I2C imu_i2c(I2C_SDA, I2C_SCL);
+IMU_BMX160 imu(&imu_i2c);
+
 // map variables
-#define MAX_COORDS 512
+// flattened tuple (x,y), updated on wall hit, stores initial and current position
+#define MAX_COORDS 1024
+int currentCoordsSize = 0; // increase by two with each new coordinate
 int coords[MAX_COORDS] = {};
 
 // general control variables
@@ -18,6 +27,7 @@ DigitalOut led1(LED1);
 DigitalIn button(USER_BUTTON);
 enum control_mode {automatic, manual} mode;
 bool buttonDown = false;
+
 
 uint8_t readBattery()
 {
@@ -38,18 +48,23 @@ void handleControls()
 void handleButton()
 {
     //TODO: make this function a thread, which uses .recv to check for commands from UI
-    if (button) {  // button is pressed
-        if  (!buttonDown) {  // a new button press
-            if (mode == automatic) {
+    if (button) 
+    {  // button is pressed
+        if  (!buttonDown) 
+        {  // a new button press
+            if (mode == automatic) 
+            {
                 mode = manual;
             }
-            else {
+            else 
+            {
                 mode = automatic;
             }
             buttonDown = true;     // record that the button is now down so we don't count one press lots of times
             thread_sleep_for(10);  // ignore anything for 10ms, a very basic way to de-bounce the button. 
         } 
-    } else { // button isn't pressed
+    } else 
+    { // button isn't pressed
         buttonDown = false;
     }
 
@@ -58,7 +73,7 @@ void handleButton()
 int main()
 {
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
-    
+
     // Connect to Wi-Fi
     SocketAddress a;
     while (wifi.connect(WIFI_SSID, WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2) != 0)
@@ -87,8 +102,10 @@ int main()
 
     mode = manual;
 
-    while (true){
-        switch(mode){
+    while (true)
+    {
+        switch(mode)
+        {
             case manual:
                 led1 = true;
                 handleButton();
@@ -101,12 +118,39 @@ int main()
                 break;
         }
 
-        // send battery level and coordinates every 1 second
-        // TODO: put everything in a string and use one send?
-        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0) {
+        // send battery level, coordinates and IMU data every 1 second
+        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0)
+        {
             uint8_t batLvl = readBattery();
-            socket.send(&batLvl, sizeof batLvl);
-            socket.send(coords, sizeof coords);
+
+            // send battery level
+            char batMsg[10];
+            std::sprintf(batMsg,"b%hhu", batLvl);
+            socket.send(batMsg, sizeof batMsg);
+
+            // send coordinates
+            char coordMsg[MAX_COORDS];
+            coordMsg[0] = 'c';
+            for (int i = 0; i < MAX_COORDS; i++)
+            {
+                if (i == currentCoordsSize) break;
+                
+                // Note: values above 255 won't work!
+                coordMsg[i + 1] = char(coords[i]); // needs to be converted to int in UI
+
+            }
+            
+            // TODO: test below line
+            socket.send(coordMsg, sizeof(char) * currentCoordsSize);
+
+            // send IMU data
+            sBmx160SensorData_t mag, gyr, acc;
+            imu.getAllData(&mag, &gyr, &acc);
+            char imuMsg[50];
+
+            std::sprintf(imuMsg, "i%.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", mag.x, mag.y, mag.z, gyr.x, gyr.y, gyr.z, acc.x, acc.y, acc.z);
+            socket.send(imuMsg, sizeof imuMsg);
+            
             timer.reset();
         }
 
