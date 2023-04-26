@@ -1,6 +1,6 @@
 #include "Motor_Controller_Test.h"
 
-void test_motor_controller(MotorController contr)
+int test_motor_controller(MotorController contr)
 {
     contr.moveForward();
 
@@ -23,5 +23,5 @@ void test_motor_controller(MotorController contr)
 
     contr.stop();
 
-    return;
+    return 0;
 }
