@@ -1,9 +1,10 @@
 #include "Motor_Controller.h"
 
 MotorController::MotorController(
-    PinName l_pwm, PinName l_fwd, PinName l_rev,
-    PinName r_pwm, PinName r_fwd, PinName r_rev) : _left(Motor(l_pwm, l_fwd, l_rev)),
-                                                   _right(Motor(r_pwm, r_fwd, r_rev)) {}
+    PinName l_in1, PinName l_in2,
+    PinName r_in1, PinName r_in2) : 
+    _left(Motor(l_in1, l_in2, false)),
+    _right(Motor(r_in1, r_in2, true)) {}
 
 void MotorController::moveForward()
 {

@@ -1,21 +1,34 @@
+// native c++ includes
 #include <chrono>
 
+// mbed includes
 #include "mbed.h"
 #include "TCPSocket.h"
 #include "ESP8266Interface.h"
 
-#include "IMU_BMX160.h"
+// our libraries
+#include <IMU_BMX160.h>
+#include <Ultrasonic.h>
+#include <Motor_Controller.h>
 
+// our includes
+#include "hardware_checks.h"
 
-// communicationvariables
+// communication variables
 ESP8266Interface wifi(PC_6, PC_7);
 #define WIFI_SSID "ssid"
 #define WIFI_PASSWORD "pass"
 #define PORT 9000
 
-//IMU
+// IMU
 I2C imu_i2c(I2C_SDA, I2C_SCL);
 IMU_BMX160 imu(&imu_i2c);
+
+// Ultrasonic
+Ultrasonic sensor(PC_2, PC_3);
+
+// Motor controller
+MotorController controller(PA_1, PB_10, PB_14, PB_15);
 
 // map variables
 // flattened tuple (x,y), updated on wall hit, stores initial and current position
@@ -26,7 +39,7 @@ int coords[MAX_COORDS] = {};
 // general control variables
 DigitalOut led1(LED1);
 DigitalIn button(USER_BUTTON);
-enum control_mode {automatic, manual} mode;
+enum control_mode {automatic, manual, test} mode;
 bool buttonDown = false;
 
 
@@ -101,12 +114,16 @@ int main()
     Timer timer;
     timer.start();
 
-    mode = manual;
+    mode = test;
 
     while (true)
     {
         switch(mode)
         {
+            case test:
+                handleButton();
+                run_hw_check_routine(imu, controller, sensor, &wifi);
+                break;
             case manual:
                 led1 = true;
                 handleButton();

@@ -1,18 +1,18 @@
 #include "Ultrasonic.h"
 
 Ultrasonic::Ultrasonic(PinName t, PinName e)
-: trig(t), echo(e) {}
+: trig(new DigitalOut(t)), echo(new DigitalIn(e)) {}
 
 float Ultrasonic::echo_duration()
 {
     timer.reset();  //reset timer
 
-    trig = 0;   // trigger low 
+    trig->write(0);   // trigger low 
     wait_us(2); //  wait 
 
-    trig = 1;   //  trigger high
+    trig->write(1);   //  trigger high
     wait_us(10);
-    trig = 0;  // trigger low
+    trig->write(0);  // trigger low
 
     while(!echo); // start pulseIN
     timer.start();

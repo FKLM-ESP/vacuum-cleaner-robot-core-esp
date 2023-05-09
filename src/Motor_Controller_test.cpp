@@ -1,4 +1,4 @@
-#include "Motor_Controller_Test.h"
+#include "Motor_Controller_test.h"
 
 int test_motor_controller(MotorController contr)
 {

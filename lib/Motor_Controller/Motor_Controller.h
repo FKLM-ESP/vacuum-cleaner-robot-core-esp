@@ -1,3 +1,6 @@
+#ifndef CUSTOM_MOTOR_CONT_H
+#define CUSTOM_MOTOR_CONT_H
+
 #include "mbed.h"
 #include "Motor.h"
 
@@ -8,8 +11,8 @@ class MotorController
 {
 public:
     MotorController(
-        PinName l_pwm, PinName l_fwd, PinName l_rev,
-        PinName r_pwm, PinName r_fwd, PinName r_rev);
+        PinName l_in1, PinName l_in2,
+        PinName r_in1, PinName r_in2);
 
     void moveForward();
     void moveBackwards();
@@ -21,3 +24,5 @@ private:
     Motor _left;
     Motor _right;
 };
+
+#endif

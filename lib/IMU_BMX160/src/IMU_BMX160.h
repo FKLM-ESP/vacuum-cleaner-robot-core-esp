@@ -1,3 +1,5 @@
+#ifndef CUSTOM_IMU_H
+#define CUSTOM_IMU_H
 /*
   This file is a direct port of the DFRobot BMX160 library available for
   Arduino systems at https://github.com/DFRobot/DFRobot_BMX160.
@@ -1117,3 +1119,5 @@ private:
   sBmx160SensorData_t *Ogyro;
   I2C *_pWire;
 };
+
+#endif
