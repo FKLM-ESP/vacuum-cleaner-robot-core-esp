@@ -67,34 +67,34 @@ void http_demo(NetworkInterface *net)
     socket.close();
 }
 
-int test_wifi(ESP8266Interface wifi)
+int test_wifi(ESP8266Interface *wifi)
 {
     SocketAddress a;
 
     printf("WiFi example\r\n\r\n");
 
-    scan_demo(&wifi);
+    //scan_demo(wifi);
 
     printf("\r\nConnecting...\r\n");
-    int ret = wifi.connect(WIFI_SSID, WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2);
+    int ret = wifi->connect(SSID, PASSWORD, NSAPI_SECURITY_WPA_WPA2);
     if (ret != 0) {
         printf("\r\nConnection error\r\n");
         return -1;
     }
 
     printf("Success\r\n\r\n");
-    printf("MAC: %s\r\n", wifi.get_mac_address());
-    wifi.get_ip_address(&a);
+    printf("MAC: %s\r\n", wifi->get_mac_address());
+    wifi->get_ip_address(&a);
     printf("IP: %s\r\n", a.get_ip_address());
-    wifi.get_netmask(&a);
+    wifi->get_netmask(&a);
     printf("Netmask: %s\r\n", a.get_ip_address());
-    wifi.get_gateway(&a);
+    wifi->get_gateway(&a);
     printf("Gateway: %s\r\n", a.get_ip_address());
-    printf("RSSI: %d\r\n\r\n", wifi.get_rssi());
+    printf("RSSI: %d\r\n\r\n", wifi->get_rssi());
 
-    http_demo(&wifi);
+    //http_demo(wifi);
 
-    //wifi.disconnect();
+    wifi->disconnect();
 
     printf("\r\nDone\r\n");
     return 0;

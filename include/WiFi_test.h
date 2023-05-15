@@ -6,10 +6,10 @@
 #include "TCPSocket.h"
 #include "ESP8266Interface.h"
 
-#define WIFI_SSID "ssid"
-#define WIFI_PASSWORD "pass"
+#define SSID "ssid"
+#define PASSWORD "pass"
 
 const char *sec2str(nsapi_security_t sec);
 void scan_demo(WiFiInterface *wifi);
 void http_demo(NetworkInterface *net);
-int test_wifi(ESP8266Interface wifi);
+int test_wifi(ESP8266Interface *wifi);

@@ -15,7 +15,7 @@
 #include "hardware_checks.h"
 
 // communication variables
-ESP8266Interface wifi(PC_6, PC_7);
+ESP8266Interface wifi(PA_9, PB_3, true);
 #define WIFI_SSID "ssid"
 #define WIFI_PASSWORD "pass"
 #define PORT 9000
@@ -169,6 +169,8 @@ void handleButton()
 int main()
 {
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+    
+    //run_hw_check_routine(imu, controller, sensor, &wifi);
 
     // Connect to Wi-Fi
     SocketAddress a;
@@ -205,6 +207,7 @@ int main()
             case test:
                 handleButton();
                 run_hw_check_routine(imu, controller, sensor, &wifi);
+                mode = manual;
                 break;
             case manual:
                 led1 = true;
