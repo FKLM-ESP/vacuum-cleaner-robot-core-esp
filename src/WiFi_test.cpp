@@ -1,48 +1,5 @@
 #include "WiFi_test.h"
 
-const char *sec2str(nsapi_security_t sec)
-{
-    switch (sec) {
-            case NSAPI_SECURITY_NONE:
-                return "None";
-            case NSAPI_SECURITY_WEP:
-                return "WEP";
-            case NSAPI_SECURITY_WPA:
-                return "WPA";
-            case NSAPI_SECURITY_WPA2:
-                return "WPA2";
-            case NSAPI_SECURITY_WPA_WPA2:
-                return "WPA/WPA2";
-            case NSAPI_SECURITY_UNKNOWN:
-            default:
-                return "Unknown";
-    }
-}
-
-void scan_demo(WiFiInterface *wifi)
-{
-    WiFiAccessPoint *ap;
-
-    printf("Scan:\r\n");
-
-    int count = wifi->scan(NULL, 0);
-
-    /* Limit number of network arbitrary to 15 */
-    count = count < 15 ? count : 15;
-
-    ap = new WiFiAccessPoint[count];
-
-    count = wifi->scan(ap, count);
-    for (int i = 0; i < count; i++) {
-        printf("Network: %s secured: %s BSSID: %hhX:%hhX:%hhX:%hhx:%hhx:%hhx RSSI: %hhd Ch: %hhd\r\n", ap[i].get_ssid(),
-               sec2str(ap[i].get_security()), ap[i].get_bssid()[0], ap[i].get_bssid()[1], ap[i].get_bssid()[2],
-               ap[i].get_bssid()[3], ap[i].get_bssid()[4], ap[i].get_bssid()[5], ap[i].get_rssi(), ap[i].get_channel());
-    }
-    printf("%d networks available.\r\n", count);
-
-    delete[] ap;
-}
-
 void http_demo(NetworkInterface *net)
 {
     // Open a socket on the network interface, and create a TCP connection to mbed.org
@@ -73,16 +30,14 @@ int test_wifi(ESP8266Interface *wifi)
 
     printf("WiFi example\r\n\r\n");
 
-    //scan_demo(wifi);
-
-    printf("\r\nConnecting...\r\n");
+    printf("\r\nConnecting to WiFi...\r\n");
     int ret = wifi->connect(SSID, PASSWORD, NSAPI_SECURITY_WPA_WPA2);
     if (ret != 0) {
         printf("\r\nConnection error\r\n");
         return -1;
     }
 
-    printf("Success\r\n\r\n");
+    printf("WiFi Connection Success\r\n\r\n");
     printf("MAC: %s\r\n", wifi->get_mac_address());
     wifi->get_ip_address(&a);
     printf("IP: %s\r\n", a.get_ip_address());
@@ -92,10 +47,10 @@ int test_wifi(ESP8266Interface *wifi)
     printf("Gateway: %s\r\n", a.get_ip_address());
     printf("RSSI: %d\r\n\r\n", wifi->get_rssi());
 
-    //http_demo(wifi);
+    http_demo(wifi);
 
     wifi->disconnect();
 
-    printf("\r\nDone\r\n");
+    printf("\r\nWiFi Demo Done\r\n");
     return 0;
 }

@@ -6,8 +6,8 @@
 #include "TCPSocket.h"
 #include "ESP8266Interface.h"
 
-#define SSID "ssid"
-#define PASSWORD "pass"
+#define SSID "FilipS22"
+#define PASSWORD "easy-p@ss87"
 
 const char *sec2str(nsapi_security_t sec);
 void scan_demo(WiFiInterface *wifi);

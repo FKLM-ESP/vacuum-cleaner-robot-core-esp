@@ -15,9 +15,9 @@
 #include "hardware_checks.h"
 
 // communication variables
-ESP8266Interface wifi(PA_9, PB_3, true);
-#define WIFI_SSID "ssid"
-#define WIFI_PASSWORD "pass"
+ESP8266Interface wifi(PA_9, PB_3);
+#define WIFI_SSID "FilipS22"
+#define WIFI_PASSWORD "easy-p@ss87"
 #define PORT 9000
 
 // IMU
@@ -170,69 +170,62 @@ int main()
 {
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     
-    //run_hw_check_routine(imu, controller, sensor, &wifi);
+    run_hw_check_routine(imu, controller, sensor, &wifi);
 
     // Connect to Wi-Fi
     SocketAddress a;
     while (wifi.connect(WIFI_SSID, WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2) != 0)
     {
         printf("\r\nCan't connect to wi-fi. Retrying\r\n");
+        //TODO: Led indicator?
     }
 
-    printf("Success\r\n\r\n");
-    printf("MAC: %s\r\n", wifi.get_mac_address());
-    wifi.get_ip_address(&a);
-    printf("IP: %s\r\n", a.get_ip_address());
-    wifi.get_netmask(&a);
-    printf("Netmask: %s\r\n", a.get_ip_address());
-    wifi.get_gateway(&a);
-    printf("Gateway: %s\r\n", a.get_ip_address());
-    printf("RSSI: %d\r\n\r\n", wifi.get_rssi());
+    printf("Connected to WiFi!\r\n\r\n");
 
-    TCPSocket socket;
-    socket.open(&wifi);
-    wifi.gethostbyname("localhost", &a);
-    a.set_port(PORT);
-    socket.connect(a);
+    // TCPSocket socket;
+    // socket.open(&wifi);
+    // wifi.gethostbyname("localhost", &a);
+    // a.set_port(PORT);
+    // socket.connect(a);
 
-    Timer timer;
-    timer.start();
+    // Timer timer;
+    // timer.start();
 
-    mode = test;
+    // mode = test;
 
-    while (true)
-    {
-        switch (mode)
-        {
-            case test:
-                handleButton();
-                run_hw_check_routine(imu, controller, sensor, &wifi);
-                mode = manual;
-                break;
-            case manual:
-                led1 = true;
-                handleButton();
-                handleControls();
-                break;
-            case automatic:
-                led1 = false;
-                handleButton();
-                autoClean();
-                break;
-        }
+    // while (true)
+    // {
+    //     switch (mode)
+    //     {
+    //         case test:
+    //             handleButton();
+    //             run_hw_check_routine(imu, controller, sensor, &wifi);
+    //             mode = manual;
+    //             break;
+    //         case manual:
+    //             led1 = true;
+    //             handleButton();
+    //             handleControls();
+    //             break;
+    //         case automatic:
+    //             led1 = false;
+    //             handleButton();
+    //             autoClean();
+    //             break;
+    //     }
 
-        // send battery level, coordinates and IMU data every 1 second
-        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0)
-        {
-            sendBattery(&socket);
+    //     // send battery level, coordinates and IMU data every 1 second
+    //     if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0)
+    //     {
+    //         sendBattery(&socket);
 
-            sendCoordinates(&socket);
+    //         sendCoordinates(&socket);
 
-            sendIMU(&socket);
+    //         sendIMU(&socket);
 
-            timer.reset();
-        }
+    //         timer.reset();
+    //     }
 
-        // TODO: what happens if Wi-Fi disconnects / TCP socket fails
-    }
+    //     // TODO: what happens if Wi-Fi disconnects / TCP socket fails
+    // }
 }
