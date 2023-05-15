@@ -1,6 +1,6 @@
 #include "hardware_checks.h"
 
-int run_hw_check_routine(IMU_BMX160 bmx, MotorController contr, Ultrasonic sensor, ESP8266Interface *wifi_module)
+int run_hw_check_routine(BMI160_I2C bmx, MotorController contr, Ultrasonic sensor, ESP8266Interface *wifi_module)
 {
     printf("HW check initialized.\n");
 

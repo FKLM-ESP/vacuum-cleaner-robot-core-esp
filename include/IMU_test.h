@@ -1,3 +1,3 @@
-#include "IMU_BMX160.h"
+#include <bmx160.h>
 
-int test_imu(IMU_BMX160 bmx);
+int test_imu(BMI160_I2C bmx);

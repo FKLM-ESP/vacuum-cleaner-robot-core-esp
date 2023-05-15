@@ -7,7 +7,7 @@
 #include "ESP8266Interface.h"
 
 // our libraries
-#include <IMU_BMX160.h>
+#include <bmx160.h>
 #include <Ultrasonic.h>
 #include <Motor_Controller.h>
 
@@ -22,7 +22,7 @@ ESP8266Interface wifi(PA_9, PB_3);
 
 // IMU
 I2C imu_i2c(PB_9, PB_8);
-IMU_BMX160 imu(&imu_i2c);
+BMI160_I2C imu(imu_i2c, BMI160_I2C::I2C_ADRS_SDO_LO);
 
 // Ultrasonic
 Ultrasonic sensor(PC_2, PC_3);
@@ -84,8 +84,14 @@ void sendCoordinates(TCPSocket *socket)
 void sendIMU(TCPSocket *socket)
 {
     // send IMU data
-    sBmx160SensorData_t mag, gyr, acc;
-    imu.getAllData(&mag, &gyr, &acc);
+    BMI160::SensorData accData;
+    BMI160::SensorData gyroData;
+    BMI160::SensorData magData;
+    BMI160::SensorTime sensorTime;
+
+    imu.getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
+    imu.getMagSensorXYZ(magData);
+
     uint8_t imuMsg[1 + bytesPerIMUValue * 9];
 
     imuMsg[0] = 'i';
@@ -107,9 +113,9 @@ void sendIMU(TCPSocket *socket)
     int yOffset = bytesPerIMUValue;
     int zOffset = 2 * bytesPerIMUValue;
 
-    uint8_t *mag_x = (uint8_t *)(&(mag.x)), *mag_y = (uint8_t *)(&(mag.y)), *mag_z = (uint8_t *)(&(mag.z));
-    uint8_t *gyr_x = (uint8_t *)(&(gyr.x)), *gyr_y = (uint8_t *)(&(gyr.y)), *gyr_z = (uint8_t *)(&(gyr.z));
-    uint8_t *acc_x = (uint8_t *)(&(acc.x)), *acc_y = (uint8_t *)(&(acc.y)), *acc_z = (uint8_t *)(&(acc.z));
+    uint8_t *mag_x = (uint8_t *)(&(magData.xAxis.scaled)), *mag_y = (uint8_t *)(&(magData.yAxis.scaled)), *mag_z = (uint8_t *)(&(magData.zAxis.scaled));
+    uint8_t *gyr_x = (uint8_t *)(&(gyroData.xAxis.scaled)), *gyr_y = (uint8_t *)(&(gyroData.yAxis.scaled)), *gyr_z = (uint8_t *)(&(gyroData.zAxis.scaled));
+    uint8_t *acc_x = (uint8_t *)(&(accData.xAxis.scaled)), *acc_y = (uint8_t *)(&(accData.yAxis.scaled)), *acc_z = (uint8_t *)(&(accData.zAxis.scaled));
 
     // the loop iterates over the indices for a single value (e.g. 0,1,2,3 for a float) and fills all the
     //     corresponding byte for all coordinates of all measurements
@@ -169,6 +175,8 @@ void handleButton()
 int main()
 {
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+    
+    imu_i2c.frequency(400000);
     
     run_hw_check_routine(imu, controller, sensor, &wifi);
 
