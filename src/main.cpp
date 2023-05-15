@@ -21,7 +21,7 @@ ESP8266Interface wifi(PA_9, PB_3);
 #define PORT 9000
 
 // IMU
-I2C imu_i2c(I2C_SDA, I2C_SCL);
+I2C imu_i2c(PB_9, PB_8);
 IMU_BMX160 imu(&imu_i2c);
 
 // Ultrasonic
@@ -173,14 +173,14 @@ int main()
     run_hw_check_routine(imu, controller, sensor, &wifi);
 
     // Connect to Wi-Fi
-    SocketAddress a;
-    while (wifi.connect(WIFI_SSID, WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2) != 0)
-    {
-        printf("\r\nCan't connect to wi-fi. Retrying\r\n");
-        //TODO: Led indicator?
-    }
+    // SocketAddress a;
+    // while (wifi.connect(WIFI_SSID, WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2) != 0)
+    // {
+    //     printf("\r\nCan't connect to wi-fi. Retrying\r\n");
+    //     //TODO: Led indicator?
+    // }
 
-    printf("Connected to WiFi!\r\n\r\n");
+    // printf("Connected to WiFi!\r\n\r\n");
 
     // TCPSocket socket;
     // socket.open(&wifi);

@@ -5,8 +5,10 @@ int run_hw_check_routine(IMU_BMX160 bmx, MotorController contr, Ultrasonic senso
     printf("HW check initialized.\n");
 
     //test_motor_controller(contr);
-    //test_imu(bmx);
+    test_imu(bmx);
     //test_ultrasonic(sensor);
-    test_wifi(wifi_module);
+
+    //TESTED components below
+    //test_wifi(wifi_module);
     return 0;
 }
