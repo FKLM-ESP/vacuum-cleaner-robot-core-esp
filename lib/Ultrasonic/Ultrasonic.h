@@ -7,16 +7,15 @@
 class Ultrasonic
 {
 public:
-    Ultrasonic(PinName t, PinName e);
+    Ultrasonic(DigitalOut t, DigitalIn e);
 
     float echo_duration();
     float distance();
 
 private:
-    // Note: DigitalOut/In objects are instantiated as pointers, 
-    // as pin names should usually be known at compile time, but here they are not
-    DigitalOut* trig;
-    DigitalIn* echo;
+    // Note: Causes warnings about deprecation, probably should fix that at some point
+    DigitalOut trig;
+    DigitalIn echo;
     Timer timer;
     float duration,distance_cm;
 };

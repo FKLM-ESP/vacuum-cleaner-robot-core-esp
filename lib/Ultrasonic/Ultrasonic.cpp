@@ -1,18 +1,18 @@
 #include "Ultrasonic.h"
 
-Ultrasonic::Ultrasonic(PinName t, PinName e)
-: trig(new DigitalOut(t)), echo(new DigitalIn(e)) {}
+Ultrasonic::Ultrasonic(DigitalOut t, DigitalIn e)
+: trig(t), echo(e){}
 
 float Ultrasonic::echo_duration()
 {
     timer.reset();  //reset timer
 
-    trig->write(0);   // trigger low 
+    trig.write(0);   // trigger low 
     wait_us(2); //  wait 
 
-    trig->write(1);   //  trigger high
+    trig.write(1);   //  trigger high
     wait_us(10);
-    trig->write(0);  // trigger low
+    trig.write(0);  // trigger low
 
     while(!echo); // start pulseIN
     timer.start();
@@ -26,7 +26,7 @@ float Ultrasonic::echo_duration()
 //return distance in cm 
 float Ultrasonic::distance() {
     duration = echo_duration();
-    distance_cm = (duration / 2) / 29.1;
+    distance_cm = duration * 34000 / 2; 
     return distance_cm;
 
 }

@@ -25,7 +25,9 @@ I2C imu_i2c(PB_9, PB_8);
 BMI160_I2C imu(imu_i2c, BMI160_I2C::I2C_ADRS_SDO_LO);
 
 // Ultrasonic
-Ultrasonic sensor(PC_2, PC_3);
+DigitalOut trig(PC_2);
+DigitalIn echo(PC_3);
+Ultrasonic sensor(trig, echo);
 
 // Motor controller
 MotorController controller(PA_1, PB_10, PB_14, PB_15);
