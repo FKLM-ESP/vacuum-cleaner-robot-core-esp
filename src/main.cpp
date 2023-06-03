@@ -25,9 +25,13 @@ I2C imu_i2c(PB_9, PB_8);
 BMI160_I2C imu(imu_i2c, BMI160_I2C::I2C_ADRS_SDO_LO);
 
 // Ultrasonic
-DigitalOut trig(PC_2);
-DigitalIn echo(PC_3);
-Ultrasonic sensor(trig, echo);
+DigitalOut trig_1(PC_2);
+DigitalIn echo_1(PC_3);
+Ultrasonic sensor_1(trig_1, echo_1);
+
+DigitalOut trig_2(PC_11);
+DigitalIn echo_2(PC_10);
+Ultrasonic sensor_2(trig_2, echo_2);
 
 // Motor controller
 MotorController controller(PA_1, PB_10, PB_14, PB_15);
@@ -180,7 +184,7 @@ int main()
     
     imu_i2c.frequency(400000);
     
-    run_hw_check_routine(imu, controller, sensor, &wifi);
+    run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
 
     // Connect to Wi-Fi
     // SocketAddress a;

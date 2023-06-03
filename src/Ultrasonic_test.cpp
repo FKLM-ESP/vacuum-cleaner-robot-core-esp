@@ -6,6 +6,10 @@ int test_ultrasonic(Ultrasonic sensor)
     {    
         float distance = sensor.distance();   
         printf("distance: %f \n",distance);
+        if (distance < 5)
+        {
+            return 1;
+        }
         wait_us(1000000); // 1 sec  
     }
     

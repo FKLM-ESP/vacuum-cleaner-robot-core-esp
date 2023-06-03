@@ -1,5 +1,7 @@
 #include "IMU_test.h"
 
+DigitalOut led_imu(LED2);
+
 int test_imu(BMI160_I2C bmx)
 {   
     //check if accel and gyro are ok
@@ -77,6 +79,11 @@ int test_imu(BMI160_I2C bmx)
             printf("GYRO xAxis (dps) = %5.1f\n", gyroData.xAxis.scaled);
             printf("GYRO yAxis (dps) = %5.1f\n", gyroData.yAxis.scaled);
             printf("GYRO zAxis (dps) = %5.1f\n\n",gyroData.zAxis.scaled);
+
+            if (accData.zAxis.scaled > -5.0 || accData.zAxis.scaled < 5.0)
+            {
+                led_imu = 1;
+            }
 
             bmx.getMagSensorXYZ(magData);
 
