@@ -24,7 +24,7 @@ void sendCoordinates(TCPSocket *socket)
     coordMsg[0] = 'c';
     for (int i = 0; i <= currentCoordsSize * bytesPerCoord; i++)
     {
-        // Dump bytes of coords into coodsMsg
+        // Dump bytes of coords into coordMsg
         coordMsg[i + 1] = coords[i];
     }
 
@@ -32,7 +32,7 @@ void sendCoordinates(TCPSocket *socket)
     socket->send(coordMsg, 1 + currentCoordsSize * bytesPerCoord);
 }
 
-void sendIMU(TCPSocket *socket)
+void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
 {
     // send IMU data
     BMI160::SensorData accData;

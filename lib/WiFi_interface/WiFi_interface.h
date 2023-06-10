@@ -7,4 +7,6 @@ int currentCoordsSize
 int *coords
 
 void sendLog(TCPSocket *socket, std::string log_message);
-void sendIMU(TCPSocket *socket);
+void sendBattery(TCPSocket *socket);
+void sendCoordinates(TCPSocket *socket);
+void sendIMU(TCPSocket *socket, BMI160_I2C* imu);
