@@ -36,15 +36,6 @@ Ultrasonic sensor_2(trig_2, echo_2);
 // Motor controller
 MotorController controller(PA_1, PB_10, PB_14, PB_15);
 
-// map variables
-// flattened tuple (x,y), updated on wall hit, stores initial and current position
-#define MAX_COORDS 1024
-const int bytesPerCoord = sizeof(int);
-int currentCoordsSize = 0; // increase by two with each new coordinate
-int coords[MAX_COORDS] = {};
-
-const int bytesPerIMUValue = sizeof(float);
-
 // battery monitor
 AnalogIn battery_reader(PB_1);
 
