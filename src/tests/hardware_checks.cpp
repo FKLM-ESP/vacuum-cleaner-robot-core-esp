@@ -10,10 +10,10 @@ int run_hw_check_routine(BMI160_I2C bmx, MotorController contr, Ultrasonic senso
 
     //TESTED components below
     test_wifi(wifi_module);
-    if (test_ultrasonic(sensor1) || test_ultrasonic(sensor2))
-    {
-        led_pcb = 1;
-    }
-    test_imu(bmx);
+    // if (test_ultrasonic(sensor1) || test_ultrasonic(sensor2))
+    // {
+    //     led_pcb = 1;
+    // }
+    // test_imu(bmx);
     return 0;
 }

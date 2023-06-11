@@ -4,12 +4,12 @@ void sendLog(TCPSocket *socket, std::string message)
 {
     const uint8_t *payload = reinterpret_cast<const uint8_t *>(("l" + message).c_str());
 
-    socket->send(payload, sizeof(payload));
+    socket->send(payload, message.length() + 1);
 }
 
-void sendBattery(TCPSocket *socket)
+void sendBattery(TCPSocket *socket, AnalogIn *battery_reader)
 {
-    uint8_t batLvl = readBattery();
+    uint8_t batLvl = readBattery(battery_reader);
 
     // send battery level
     char batMsg[3]; // one more because sprintf inserts string terminator
@@ -40,8 +40,8 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     BMI160::SensorData magData;
     BMI160::SensorTime sensorTime;
 
-    imu.getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
-    imu.getMagSensorXYZ(magData);
+    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
+    imu->getMagSensorXYZ(magData);
 
     uint8_t imuMsg[1 + bytesPerIMUValue * 9];
 

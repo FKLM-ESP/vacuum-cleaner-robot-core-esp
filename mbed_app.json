@@ -1,7 +1,7 @@
 {
     "target_overrides": {
       "*": {
-        "target.c_lib": "small",
+        "target.c_lib": "std",
         "target.printf_lib": "std",
         "platform.stdio-minimal-console-only": true
       }

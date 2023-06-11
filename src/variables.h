@@ -1,6 +1,8 @@
 // map variables
 // flattened tuple (x,y), updated on wall hit, stores initial and current position
+#ifndef VARIABLES_H
 
+#define VARIABLES_H
 // Constants
 
 #define MAX_COORDS 1024
@@ -14,7 +16,7 @@ const int bytesPerIMUValue = sizeof(float);
 
 // Always check that currentCoordsSize < MAX_COORDS before adding
 
-// All files accessing these variables should re-declare them in their .h file (without extern)
-extern int currentCoordsSize = 0; // increase by two with each new coordinate
-extern int coords[MAX_COORDS] = {};
+extern int currentCoordsSize; // increase by two with each new coordinate
+extern int *coords;
 
+#endif
