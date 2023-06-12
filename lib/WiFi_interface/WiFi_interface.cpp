@@ -28,7 +28,6 @@ void sendCoordinates(TCPSocket *socket)
         coordMsg[i + 1] = coords[i];
     }
 
-    // TODO: test below line
     socket->send(coordMsg, 1 + currentCoordsSize * bytesPerCoord);
 }
 
