@@ -86,3 +86,61 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
 
     socket->send(imuMsg, sizeof imuMsg);
 }
+
+/**
+ * Function to launch in a separate thread. Keeps an infinite loop reading all incoming
+ * commands from the UI app and acting accordingly
+ */
+void readCommand(TCPSocket *socket)
+{
+
+    // Should only receive messages one byte long
+    int buffer_size = 1;
+
+    uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * buffer_size);
+
+    while (socket->recv(buffer, buffer_size))
+    {
+        switch (buffer[0])
+        {
+        case FAN_ON:
+        case FAN_OFF:
+            if (current_mode != automatic)
+            {
+                fan_state = (buffer[0] & 0x40);
+                printf("Fan set to %d\n", fan_state);
+            }
+            break;
+
+        case AUTO_ON:
+        case AUTO_OFF:
+            new_mode = (buffer[0] & 0x10) ? automatic : manual;
+            printf("Mode set to %s\n", (new_mode == automatic) ? "automatic" : "manual");
+            break;
+
+        case STATE_STOP:
+            current_movement_state = STATE_STOP;
+            printf("State set to STOP\n");
+            break;
+
+        case STATE_FORWARD:
+        case STATE_BACKWARD:
+        case STATE_LEFT:
+        case STATE_RIGHT:
+            if (current_movement_state == STATE_STOP)
+            {
+                current_movement_state = buffer[0];
+                printf("State set to %d\n", current_movement_state);
+            }
+            break;
+        }
+    }
+
+    /*
+        Given the limited software scope of the project I think it's enough to print that the socket
+        is gone and forget about it, otherwise we can return some error code and main will now that
+        something is wrong and try and reconnect, but that would be a big headache since it would
+        involve reconnecting to the wifi as well
+    */
+    printf("TCP Socket closed with an error\n");
+}

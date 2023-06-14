@@ -20,9 +20,9 @@ ESP8266Interface wifi(PA_9, PB_3);
 #define WIFI_SSID "ExtRouter"
 #define WIFI_PASSWORD "easy-p@ss87"
 #define PORT 9000
-#define IP_ADDR "192.168.1.10"  // Lorenzo phone
-//#define IP_ADDR "192.168.1.11"  // Khalil phone
-//#define IP_ADDR "192.168.1.12"  // Filip phone
+#define IP_ADDR "192.168.1.10" // Lorenzo phone
+// #define IP_ADDR "192.168.1.11"  // Khalil phone
+// #define IP_ADDR "192.168.1.12"  // Filip phone
 
 // IMU
 I2C imu_i2c(PB_9, PB_8);
@@ -44,19 +44,21 @@ AnalogIn not_connected(PB_0); // PCB issue
 // battery monitor
 AnalogIn battery_reader(PB_1);
 
-// Coordinates 
+// Global variables
 int currentCoordsSize;
 int *coords;
+
+int *position_3d;
+float *orientation_3d;
+
+control_mode current_mode;
+bool fan_state;
+uint8_t current_movement_state;
 
 // general control variables
 DigitalOut led1(LED1);
 DigitalIn button(USER_BUTTON);
-enum control_mode
-{
-    automatic,
-    manual,
-    test
-} mode;
+
 bool buttonDown = false;
 
 void handleButton()
@@ -66,13 +68,13 @@ void handleButton()
     { // button is pressed
         if (!buttonDown)
         { // a new button press
-            if (mode == automatic)
+            if (current_mode == automatic)
             {
-                mode = manual;
+                current_mode = manual;
             }
             else
             {
-                mode = automatic;
+                current_mode = automatic;
             }
             buttonDown = true;    // record that the button is now down so we don't count one press lots of times
             thread_sleep_for(10); // ignore anything for 10ms, a very basic way to de-bounce the button.
@@ -86,15 +88,22 @@ void handleButton()
 
 int main()
 {
-    // Initialization
-    coords = (int*)malloc(sizeof(int) * MAX_COORDS);
+    // Global variable allocation
+    coords = (int *)malloc(sizeof(int) * MAX_COORDS);
     currentCoordsSize = 0;
 
+    position_3d = (int *)malloc(sizeof(int) * 3);
+    orientation_3d = (float *)malloc(sizeof(float) * 3);
+
+    fan_state = false;
+    current_movement_state = STATE_STOP;
+    // ??? current_mode = auto;
+
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
-    
+
     imu_i2c.frequency(400000);
-    
-    //run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
+
+    // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
 
     // Connect to Wi-Fi
     printf("\r\nConnecting...\r\n");
@@ -103,7 +112,7 @@ int main()
     if (ret != 0)
     {
         printf("\r\nCan't connect to wi-fi. Retrying\r\n");
-        //TODO: Led indicator?
+        // TODO: Led indicator?
     }
 
     printf("Connected to WiFi!\r\n\r\n");
@@ -117,34 +126,58 @@ int main()
     Timer timer;
     timer.start();
 
-    while (true)
+    /*
+        Missing:
+            - start motor actuator thread, if necessary (functionality can be handled by the following loop)
+            - start imu reading thread, will be responsible from reading values and updating position_3d and orientation_3d
+            - start auto mode thread, if "too cumbersome" to be handled in the main loop
+                Pro thread
+                    less logic in main
+                    faster reaction (maybe)
+                Pro no-thread
+                    easier to handle, not starting and stopping threads
+                    we don't really care about speed
+
+        The loop will be responsible for
+            - handling the transition between automatic and manual modes (=starting and stopping the auto mode thread if used)
+                NOTE: if auto mode is not controlled by a separate thread than the 'new_mode' variable is useledd, the ui command
+                    reader can directly set 'current_mode' and the main loop will pick up from there
+            - periodically sending data to the app, with different periods (different timers) depending on the importance and velocity
+                (e.g. imu every second, coordinates every 10 seconds, battery every 20 seconds)
+            - if we want to handle wifi and socket reconnection
+                MUST use separate threads for this, connection is very slow
+            - set motor controller state if not using a separate thread
+    */
+
+    // while (true)
     {
         // send battery level, coordinates and IMU data every 1 second
-        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0)
+        // if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 3.0)
         {
-            sendBattery(&socket, &battery_reader);
+            // sendBattery(&socket, &battery_reader);
 
-            sendLog(&socket, "Test");
+            // sendLog(&socket, "Test");
 
             // sendCoordinates(&socket);
 
-            // sendIMU(&socket);
+            // sendIMU(&socket, &imu);
+
+            test_imu(imu);
 
             timer.reset();
         }
     }
 
-
-    // mode = test;
+    // current_mode = test;
 
     // while (true)
     // {
-    //     switch (mode)
+    //     switch (current_mode)
     //     {
     //         case test:
     //             handleButton();
     //             run_hw_check_routine(imu, controller, sensor, &wifi);
-    //             mode = manual;
+    //             current_mode = manual;
     //             break;
     //         case manual:
     //             led1 = true;
@@ -174,4 +207,6 @@ int main()
     // }
 
     free(coords);
+    free(position_3d);
+    free(orientation_3d);
 }
