@@ -1,4 +1,4 @@
-#include "WiFi_interface.h"
+#include <WiFi_interface.h>
 
 void sendLog(TCPSocket *socket, std::string message)
 {
@@ -28,6 +28,8 @@ void sendCoordinates(TCPSocket *socket)
 
     // Copy current coordinates
     memcpy(coordMsg + 1 + sizeof(int) * currentCoordsSize, position_3d, sizeof(int) * 2);
+
+    // TODO: test again
 
     socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
 }
@@ -85,6 +87,8 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
         imuMsg[1 + i + zOffset + accOffset] = acc_z[i];
     }
 
+    // TODO: test
+
     socket->send(imuMsg, sizeof imuMsg);
 }
 
@@ -133,6 +137,10 @@ void readCommand(TCPSocket *socket)
                 current_movement_state = buffer[0];
                 printf("State set to %d\n", current_movement_state);
             }
+            break;
+
+        case TEST_MODE:
+            new_mode = test;
             break;
         }
     }

@@ -1,8 +1,7 @@
-// map variables
-// flattened tuple (x,y), updated on wall hit, stores initial and current position
 #ifndef VARIABLES_H
 #define VARIABLES_H
 
+#include "mbed.h"
 #include <types.h>
 
 // CONSTANTS
@@ -12,7 +11,6 @@ const int bytesPerIMUValue = sizeof(float);
 
 /* Control constants
     Note that uint8_t and hex values can be compared directly
-    TODO: change the message sent by the UI app
 */
 #define STATE_STOP 0x00     // 0000 0000
 #define STATE_FORWARD 0x01  // 0000 0001
@@ -32,6 +30,8 @@ const int bytesPerIMUValue = sizeof(float);
 #define FAN_ON 0xC0   // 1100 0000 (0x80 & 0x40 but switch complains)
 #define FAN_OFF 0x80  // 1000 0000
 
+#define TEST_MODE 0xFF // 1111 1111
+
 // GLOBAL VARIABLES
 
 /* Coordinates and position
@@ -45,12 +45,33 @@ extern int *coords;
 
 // in cm
 extern int *position_3d;
+// in cm/s
+extern float *velocity_3d;
 // in radians?
 extern float *orientation_3d;
+// in rad/s
+extern float *ang_velocity_3d;
 
 extern control_mode new_mode; // controlled from the ui app to signal to the main loop to chenge current mode
 extern control_mode current_mode;
 extern bool fan_state;
 extern uint8_t current_movement_state;
+
+// UTIL DEFINES
+#define POS_X   position_3d[0]
+#define POS_Y   position_3d[1]
+#define POS_Z   position_3d[2]
+
+#define VEL_X   velocity_3d[0]
+#define VEL_Y   velocity_3d[1]
+#define VEL_Z   velocity_3d[2]
+
+#define YAW     orientation_3d[0]
+#define PITCH   orientation_3d[1]
+#define ROLL    orientation_3d[2]
+
+#define ANG_VEL_YAW     ang_velocity_3d[0]
+#define ANG_VEL_PITCH   ang_velocity_3d[1]
+#define ANG_VEL_ROLL    ang_velocity_3d[2]
 
 #endif

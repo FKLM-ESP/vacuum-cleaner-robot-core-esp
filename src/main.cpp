@@ -49,7 +49,9 @@ int currentCoordsSize;
 int *coords;
 
 int *position_3d;
+float *velocity_3d;
 float *orientation_3d;
+float *ang_velocity_3d;
 
 control_mode current_mode;
 bool fan_state;
@@ -95,8 +97,12 @@ int main()
 
     position_3d = (int *)malloc(sizeof(int) * 3);
     position_3d[0] = 0; position_3d[1] = 0; position_3d[2] = 0;
+    velocity_3d = (float *)malloc(sizeof(float) * 3);
+    velocity_3d[0] = 0; velocity_3d[1] = 0; velocity_3d[2] = 0;
     orientation_3d = (float *)malloc(sizeof(float) * 3);
     orientation_3d[0] = 0; orientation_3d[1] = 0; orientation_3d[2] = 0;
+    ang_velocity_3d = (float *)malloc(sizeof(float) * 3);
+    ang_velocity_3d[0] = 0; ang_velocity_3d[1] = 0; ang_velocity_3d[2] = 0;
 
     fan_state = false;
     current_movement_state = STATE_STOP;
@@ -131,7 +137,7 @@ int main()
 
     /*
         Missing:
-            - start motor actuator thread, if necessary (functionality can be handled by the following loop)
+            - start motor actuator thread, if necessary (functionality can be handled by the main loop)
             - start imu reading thread, will be responsible from reading values and updating position_3d and orientation_3d
             - start auto mode thread, if "too cumbersome" to be handled in the main loop
                 Pro thread
@@ -143,7 +149,7 @@ int main()
 
         The loop will be responsible for
             - handling the transition between automatic and manual modes (=starting and stopping the auto mode thread if used)
-                NOTE: if auto mode is not controlled by a separate thread than the 'new_mode' variable is useledd, the ui command
+                NOTE: if auto mode is not controlled by a separate thread than the 'new_mode' variable is useless, the ui command
                     reader can directly set 'current_mode' and the main loop will pick up from there
             - periodically sending data to the app, with different periods (different timers) depending on the importance and velocity
                 (e.g. imu every second, coordinates every 10 seconds, battery every 20 seconds)
@@ -212,4 +218,5 @@ int main()
     free(coords);
     free(position_3d);
     free(orientation_3d);
+    free(ang_velocity_3d);
 }
