@@ -90,10 +90,13 @@ int main()
 {
     // Global variable allocation
     coords = (int *)malloc(sizeof(int) * MAX_COORDS);
-    currentCoordsSize = 0;
+    coords[0] = 0; coords[1] = 0;
+    currentCoordsSize = 2;
 
     position_3d = (int *)malloc(sizeof(int) * 3);
+    position_3d[0] = 0; position_3d[1] = 0; position_3d[2] = 0;
     orientation_3d = (float *)malloc(sizeof(float) * 3);
+    orientation_3d[0] = 0; orientation_3d[1] = 0; orientation_3d[2] = 0;
 
     fan_state = false;
     current_movement_state = STATE_STOP;

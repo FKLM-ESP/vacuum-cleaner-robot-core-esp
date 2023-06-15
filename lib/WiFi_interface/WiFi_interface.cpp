@@ -20,15 +20,16 @@ void sendBattery(TCPSocket *socket, AnalogIn *battery_reader)
 void sendCoordinates(TCPSocket *socket)
 {
     // send coordinates
-    uint8_t coordMsg[1 + MAX_COORDS * bytesPerCoord];
+    uint8_t coordMsg[1 + (MAX_COORDS + 2) * bytesPerCoord];
     coordMsg[0] = 'c';
-    for (int i = 0; i <= currentCoordsSize * bytesPerCoord; i++)
-    {
-        // Dump bytes of coords into coordMsg
-        coordMsg[i + 1] = coords[i];
-    }
 
-    socket->send(coordMsg, 1 + currentCoordsSize * bytesPerCoord);
+    // Copy saved coordinates
+    memcpy(coordMsg + 1, coords, sizeof(int) * currentCoordsSize);
+
+    // Copy current coordinates
+    memcpy(coordMsg + 1 + sizeof(int) * currentCoordsSize, position_3d, sizeof(int) * 2);
+
+    socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
 }
 
 void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
