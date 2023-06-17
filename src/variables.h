@@ -9,6 +9,14 @@
 const int bytesPerCoord = sizeof(int);
 const int bytesPerIMUValue = sizeof(float);
 
+/* Connection and debuggin */
+#define WIFI_SSID "ExtRouter"
+#define WIFI_PASSWORD "easy-p@ss87"
+#define PORT 9000
+#define IP_ADDR "192.168.1.10" // Lorenzo phone
+// #define IP_ADDR "192.168.1.11"  // Khalil phone
+// #define IP_ADDR "192.168.1.12"  // Filip phone
+
 // In rad - equivalent to around 2.85 deg
 #define YAW_TARGET_THRESH 0.05
 // In cm
@@ -61,6 +69,7 @@ extern control_mode new_mode; // controlled from the ui app to signal to the mai
 extern control_mode current_mode;
 extern bool fan_state;
 extern uint8_t current_movement_state;
+extern uint8_t new_movement_state;
 
 // UTIL DEFINES
 #define POS_X   position_3d[0]

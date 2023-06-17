@@ -124,7 +124,7 @@ void readCommand(TCPSocket *socket)
             break;
 
         case STATE_STOP:
-            current_movement_state = STATE_STOP;
+            new_movement_state = STATE_STOP;
             printf("State set to STOP\n");
             break;
 
@@ -132,10 +132,10 @@ void readCommand(TCPSocket *socket)
         case STATE_BACKWARD:
         case STATE_LEFT:
         case STATE_RIGHT:
-            if (current_movement_state == STATE_STOP)
+            if (new_movement_state == STATE_STOP)
             {
-                current_movement_state = buffer[0];
-                printf("State set to %d\n", current_movement_state);
+                new_movement_state = buffer[0];
+                printf("State set to %d\n", new_movement_state);
             }
             break;
 
