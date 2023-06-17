@@ -98,6 +98,15 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
         new_ang_vel[2] = ANG_VEL_ROLL + (gyroData.yAxis.raw * delta_s);
 
         new_or[0] = new_ang_vel[0] + (gyroData.zAxis.raw * delta_s);
+        // Keep it in range. We don't care for pitch and roll (if imu is flat enough on the robot)
+        if (new_or[0] > 6.28319)
+        {
+          new_or[0] -= 6.28319;
+        }
+        else if (new_or[0] < 0)
+        {
+          new_or[0] += 6.28319;
+        }
         new_or[1] = new_ang_vel[1] + (gyroData.xAxis.raw * delta_s);
         new_or[2] = new_ang_vel[2] + (gyroData.yAxis.raw * delta_s);
 

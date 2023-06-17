@@ -9,6 +9,11 @@
 const int bytesPerCoord = sizeof(int);
 const int bytesPerIMUValue = sizeof(float);
 
+// In rad - equivalent to around 2.85 deg
+#define YAW_TARGET_THRESH 0.05
+// In cm
+#define DISTANCE_SENSOR_THRESH 15
+
 /* Control constants
     Note that uint8_t and hex values can be compared directly
 */
@@ -36,7 +41,7 @@ const int bytesPerIMUValue = sizeof(float);
 
 /* Coordinates and position
     Be careful: ADD THE COORDINATES BEFORE INCREASING currentCoordsSize,
-     or use the usual coords[currentCoordsSize++] = newCoo
+     or use the usual coords[currentCoordsSize++] = newCoord
     Always check that currentCoordsSize < MAX_COORDS before adding
 */
 
