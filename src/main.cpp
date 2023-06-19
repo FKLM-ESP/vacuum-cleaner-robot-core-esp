@@ -11,10 +11,10 @@
 #include <Ultrasonic.h>
 #include <Motor_Controller.h>
 #include <WiFi_interface.h>
-#include <wifi_and_socket_connection.h>
 
 // our includes
 #include "hardware_checks.h"
+#include "wifi_and_socket_connection.h"
 
 // communication variables
 ESP8266Interface wifi(PA_9, PB_3);
@@ -118,7 +118,21 @@ int main()
 
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
+    // Setup
     imu_i2c.frequency(400000);
+    if(imu.setSensorPowerMode(BMI160::GYRO, BMI160::NORMAL) != BMI160::RTN_NO_ERROR) {
+        printf("Failed to set gyroscope power mode\n");
+    }
+    thread_sleep_for(100);
+    if(imu.setSensorPowerMode(BMI160::ACC, BMI160::NORMAL) != BMI160::RTN_NO_ERROR) {
+        printf("Failed to set accelerometer power mode\n");
+    }
+    thread_sleep_for(100);
+    if(imu.setSensorPowerMode(BMI160::MAG, BMI160::NORMAL) != BMI160::RTN_NO_ERROR) {
+        printf("Failed to set magnetometer power mode\n");
+    }
+    imu.setMagnConf(); //initialize magnetometer for regular preset.
+    thread_sleep_for(100);
 
     // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
 
@@ -136,7 +150,7 @@ int main()
     Timer timer;
     timer.start();
 
-    // while (true)
+    while (true)
     {
         // send battery level, coordinates and IMU data every 1 second
         // if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 3.0)
@@ -147,11 +161,12 @@ int main()
 
             // sendCoordinates(&socket);
 
-            // sendIMU(&socket, &imu);
+            sendIMU(&socket, &imu);
 
-            test_imu(imu);
+            thread_sleep_for(2000);
 
             timer.reset();
+            
         }
     }
 
