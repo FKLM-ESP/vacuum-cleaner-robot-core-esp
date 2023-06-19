@@ -45,7 +45,7 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
     imu->getMagSensorXYZ(magData);
 
-    //uint8_t imuMsg[1 + bytesPerIMUValue * 9];
+    // uint8_t imuMsg[1 + bytesPerIMUValue * 9];
     uint8_t imuMsg[1 + bytesPerIMUValue * 9];
 
     imuMsg[0] = 'i';
@@ -79,22 +79,21 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     //     corresponding byte for all coordinates of all measurements
     // for (int i = 0; i < bytesPerIMUValue; i++)
     // {
-        // imuMsg[1 + i + xOffset + magOffset] = mag_x[i];
-        // imuMsg[1 + i + xOffset + gyrOffset] = gyr_x[i];
-        // imuMsg[1 + i + xOffset + accOffset] = acc_x[i];
+    // imuMsg[1 + i + xOffset + magOffset] = mag_x[i];
+    // imuMsg[1 + i + xOffset + gyrOffset] = gyr_x[i];
+    // imuMsg[1 + i + xOffset + accOffset] = acc_x[i];
 
+    // imuMsg[1 + i + yOffset + magOffset] = mag_y[i];
+    // imuMsg[1 + i + yOffset + gyrOffset] = gyr_y[i];
+    // imuMsg[1 + i + yOffset + accOffset] = acc_y[i];
 
-        // imuMsg[1 + i + yOffset + magOffset] = mag_y[i];
-        // imuMsg[1 + i + yOffset + gyrOffset] = gyr_y[i];
-        // imuMsg[1 + i + yOffset + accOffset] = acc_y[i];
+    // imuMsg[1 + i + zOffset + magOffset] = mag_z[i];
+    // imuMsg[1 + i + zOffset + gyrOffset] = gyr_z[i];
+    // imuMsg[1 + i + zOffset + accOffset] = acc_z[i];
 
-        // imuMsg[1 + i + zOffset + magOffset] = mag_z[i];
-        // imuMsg[1 + i + zOffset + gyrOffset] = gyr_z[i];
-        // imuMsg[1 + i + zOffset + accOffset] = acc_z[i];
-        
-        // printf("ACC xAxis (g) = %d\n", acc_x[i]);
-        // printf("ACC yAxis (g) = %d\n", acc_y[i]);
-        // printf("ACC zAxis (g) = %d\n\n", acc_z[i]);
+    // printf("ACC xAxis (g) = %d\n", acc_x[i]);
+    // printf("ACC yAxis (g) = %d\n", acc_y[i]);
+    // printf("ACC zAxis (g) = %d\n\n", acc_z[i]);
     //}
 
     // for (int i = 0; i < 9 * bytesPerIMUValue; i ++)
@@ -103,27 +102,63 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     // }
     // printf("\n");
 
-    int mag_x = magData.xAxis.scaled * 10000, mag_y = magData.yAxis.scaled * 10000, mag_z = magData.zAxis.scaled * 10000;
-    int gyr_x = gyroData.xAxis.scaled * 10000, gyr_y = gyroData.yAxis.scaled * 10000, gyr_z = gyroData.zAxis.scaled * 10000;
-    int acc_x = accData.xAxis.scaled * 10000, acc_y = accData.yAxis.scaled * 10000, acc_z = accData.zAxis.scaled * 10000;
+    int mag_x = static_cast<int>(magData.xAxis.scaled * 10000), mag_y = static_cast<int>(magData.yAxis.scaled * 10000), mag_z = static_cast<int>(magData.zAxis.scaled * 10000);
+    int gyr_x = static_cast<int>(gyroData.xAxis.scaled * 10000), gyr_y = static_cast<int>(gyroData.yAxis.scaled * 10000), gyr_z = static_cast<int>(gyroData.zAxis.scaled * 10000);
+    int acc_x = static_cast<int>(accData.xAxis.scaled * 10000), acc_y = static_cast<int>(accData.yAxis.scaled * 10000), acc_z = static_cast<int>(accData.zAxis.scaled * 10000);
 
-    memcpy(imuMsg + 1, &mag_x, 4);
-    memcpy(imuMsg + 5, &mag_y, 4);
-    memcpy(imuMsg + 9, &mag_z, 4);
-    memcpy(imuMsg + 13, &gyr_x, 4);
-    memcpy(imuMsg + 17, &gyr_y, 4);
-    memcpy(imuMsg + 21, &gyr_z, 4);
-    memcpy(imuMsg + 25, &acc_x, 4);
-    memcpy(imuMsg + 29, &acc_y, 4);
-    memcpy(imuMsg + 33, &acc_z, 4);
+    // memcpy(imuMsg + 1, &mag_x, 4);
+    // memcpy(imuMsg + 5, &mag_y, 4);
+    // memcpy(imuMsg + 9, &mag_z, 4);
+    // memcpy(imuMsg + 13, &gyr_x, 4);
+    // memcpy(imuMsg + 17, &gyr_y, 4);
+    // memcpy(imuMsg + 21, &gyr_z, 4);
+    // memcpy(imuMsg + 25, &acc_x, 4);
+    // memcpy(imuMsg + 29, &acc_y, 4);
+    // memcpy(imuMsg + 33, &acc_z, 4);
 
-    for (int i = 1; i < 9  * bytesPerIMUValue; i += bytesPerIMUValue)
+    imuMsg[1] = mag_x >> 24;
+    imuMsg[2] = mag_x >> 16;
+    imuMsg[3] = mag_x >> 8;
+    imuMsg[4] = mag_x;
+    imuMsg[5] = mag_y >> 24;
+    imuMsg[6] = mag_y >> 16;
+    imuMsg[7] = mag_y >> 8;
+    imuMsg[8] = mag_y;
+    imuMsg[9] = mag_z >> 24;
+    imuMsg[10] = mag_z >> 16;
+    imuMsg[11] = mag_z >> 8;
+    imuMsg[12] = mag_z;
+    imuMsg[13] = gyr_x >> 24;
+    imuMsg[14] = gyr_x >> 16;
+    imuMsg[15] = gyr_x >> 8;
+    imuMsg[16] = gyr_x;
+    imuMsg[17] = gyr_y >> 24;
+    imuMsg[18] = gyr_y >> 16;
+    imuMsg[19] = gyr_y >> 8;
+    imuMsg[20] = gyr_y;
+    imuMsg[21] = gyr_z >> 24;
+    imuMsg[22] = gyr_z >> 16;
+    imuMsg[23] = gyr_z >> 8;
+    imuMsg[24] = gyr_z;
+    imuMsg[25] = acc_x >> 24;
+    imuMsg[26] = acc_x >> 16;
+    imuMsg[27] = acc_x >> 8;
+    imuMsg[28] = acc_x;
+    imuMsg[29] = acc_y >> 24;
+    imuMsg[30] = acc_y >> 16;
+    imuMsg[31] = acc_y >> 8;
+    imuMsg[32] = acc_y;
+    imuMsg[33] = acc_z >> 24;
+    imuMsg[34] = acc_z >> 16;
+    imuMsg[35] = acc_z >> 8;
+    imuMsg[36] = acc_z;
+
+    for (int i = 1; i < 9 * bytesPerIMUValue; i += bytesPerIMUValue)
     {
         printf("%d ", imuMsg[i]);
     }
     printf("\n");
 
-    
     // TODO: test
     socket->send(imuMsg, sizeof imuMsg);
 }
