@@ -13,9 +13,12 @@ const int bytesPerIMUValue = sizeof(float);
 #define WIFI_SSID "ExtRouter"
 #define WIFI_PASSWORD "easy-p@ss87"
 #define PORT 9000
-#define IP_ADDR "192.168.1.10" // Lorenzo phone
+// #define IP_ADDR "192.168.1.10" // Lorenzo phone
 // #define IP_ADDR "192.168.1.11"  // Khalil phone
-// #define IP_ADDR "192.168.1.12"  // Filip phone
+#define IP_ADDR "192.168.1.12"  // Filip phone
+
+// Scaling value for float to int conversion (UI IMU visualization)
+#define SCALING 10000
 
 // In rad - equivalent to around 2.85 deg
 #define YAW_TARGET_THRESH 0.05
