@@ -153,17 +153,15 @@ int main()
     while (true)
     {
         // send battery level, coordinates and IMU data every 1 second
-        // if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 3.0)
+        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 2.0)
         {
             // sendBattery(&socket, &battery_reader);
 
             // sendLog(&socket, "Test");
 
-            // sendCoordinates(&socket);
+            sendCoordinates(&socket);
 
             sendIMU(&socket, &imu);
-
-            thread_sleep_for(2000);
 
             timer.reset();
             

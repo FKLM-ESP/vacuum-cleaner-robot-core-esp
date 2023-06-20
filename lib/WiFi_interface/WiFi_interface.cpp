@@ -31,7 +31,7 @@ void sendCoordinates(TCPSocket *socket)
 
     // TODO: test again
 
-    socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
+    //socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
 }
 
 void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
@@ -55,7 +55,7 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     //     and on the different measurements (mag, gyr, acc), spaced by bytesPerIMUMeasurement
     // Each of the sections will fill in one of the coordinates (x, y, z) for all three
     //     measurements.
-    // "Conversions" to byte arrays are done only once before the loop
+    // "Conversions" to byte arrays are done by promoting the float to an integer by scaling it and then splitting it into bytes
 
     int mag_x = static_cast<int>(magData.xAxis.scaled * SCALING), mag_y = static_cast<int>(magData.yAxis.scaled * SCALING), mag_z = static_cast<int>(magData.zAxis.scaled * SCALING);
     int gyr_x = static_cast<int>(gyroData.xAxis.scaled * SCALING), gyr_y = static_cast<int>(gyroData.yAxis.scaled * SCALING), gyr_z = static_cast<int>(gyroData.zAxis.scaled * SCALING);
