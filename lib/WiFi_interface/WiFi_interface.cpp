@@ -130,7 +130,7 @@ void readCommand(TCPSocket *socket)
 
     uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * buffer_size);
 
-    while (socket->recv(buffer, buffer_size))
+    if (socket->recv(buffer, buffer_size))
     {
         switch (buffer[0])
         {

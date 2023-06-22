@@ -39,6 +39,10 @@ AnalogIn not_connected(PB_0); // PCB issue
 // battery monitor
 AnalogIn battery_reader(PB_1);
 
+// LEDs
+DigitalOut led_test(LED2);
+DigitalOut led_fan(PA_10);
+
 // Global variables
 int currentCoordsSize;
 int *coords;
@@ -52,37 +56,6 @@ control_mode new_mode;
 bool fan_state;
 uint8_t current_movement_state;
 uint8_t new_movement_state;
-
-// general control variables
-DigitalOut led1(LED1);
-DigitalIn button(USER_BUTTON);
-
-bool buttonDown = false;
-
-void handleButton()
-{
-    // TODO: make this function a thread, which uses .recv to check for commands from UI
-    if (button)
-    { // button is pressed
-        if (!buttonDown)
-        { // a new button press
-            if (current_mode == automatic)
-            {
-                current_mode = manual;
-            }
-            else
-            {
-                current_mode = automatic;
-            }
-            buttonDown = true;    // record that the button is now down so we don't count one press lots of times
-            thread_sleep_for(10); // ignore anything for 10ms, a very basic way to de-bounce the button.
-        }
-    }
-    else
-    { // button isn't pressed
-        buttonDown = false;
-    }
-}
 
 int main()
 {
@@ -129,7 +102,7 @@ int main()
     imu.setMagnConf(); //initialize magnetometer for regular preset.
     thread_sleep_for(100);
 
-    // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
+    // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, true, &led_test, &led_fan);
 
     TCPSocket socket;
 
@@ -150,7 +123,7 @@ int main()
         // send battery level, coordinates and IMU data every 1 second
         if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 0.5)
         {
-            // sendBattery(&socket, &battery_reader);
+            sendBattery(&socket, &battery_reader);
 
             // sendLog(&socket, "Test");
 
@@ -162,44 +135,6 @@ int main()
             
         }
     }
-
-    // current_mode = test;
-
-    // while (true)
-    // {
-    //     switch (current_mode)
-    //     {
-    //         case test:
-    //             handleButton();
-    //             run_hw_check_routine(imu, controller, sensor, &wifi);
-    //             current_mode = manual;
-    //             break;
-    //         case manual:
-    //             led1 = true;
-    //             handleButton();
-    //             handleControls();
-    //             break;
-    //         case automatic:
-    //             led1 = false;
-    //             handleButton();
-    //             autoClean();
-    //             break;
-    //     }
-
-    //     // send battery level, coordinates and IMU data every 1 second
-    //     if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 1.0)
-    //     {
-    //         sendBattery(&socket);
-
-    //         sendCoordinates(&socket);
-
-    //         sendIMU(&socket);
-
-    //         timer.reset();
-    //     }
-
-    //     // TODO: what happens if Wi-Fi disconnects / TCP socket fails
-    // }
 
     /***********************************************************************************
      * END OF TEST AREA
@@ -238,6 +173,7 @@ int main()
 
     while (true)
     {
+        readCommand(&socket);
 
         // handle mode changes first
         if (current_mode != new_mode)
@@ -260,7 +196,7 @@ int main()
         switch (current_mode)
         {
         case test:
-            run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi);
+            run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, false, &led_test, &led_fan);
             current_mode = manual;
             break;
 

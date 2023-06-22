@@ -1,9 +1,8 @@
 #include "IMU_test.h"
 
-DigitalOut led_imu(LED2);
-
 int test_imu(BMI160_I2C bmx)
 {   
+    bool imu_works = false;
     //check if accel and gyro are ok
     uint32_t failures = 0;
     if(bmx.setSensorPowerMode(BMI160::GYRO, BMI160::NORMAL) != BMI160::RTN_NO_ERROR) {
@@ -82,7 +81,7 @@ int test_imu(BMI160_I2C bmx)
 
             if (accData.zAxis.scaled > -5.0 || accData.zAxis.scaled < 5.0)
             {
-                led_imu = 1;
+                imu_works = true;
             }
 
             bmx.getMagSensorXYZ(magData);
@@ -105,6 +104,6 @@ int test_imu(BMI160_I2C bmx)
             printf("Error\n");
         }
     }
-
-    return 0;
+    
+    return imu_works;
 }

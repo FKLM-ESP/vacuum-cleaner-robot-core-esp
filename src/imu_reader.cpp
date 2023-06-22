@@ -17,7 +17,6 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
     int new_pos[3];
     float new_vel[3];
     float new_or[3];
-    float new_ang_vel[3];
 
     Timer timer;
     timer.start();
