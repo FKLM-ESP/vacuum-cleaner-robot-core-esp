@@ -46,7 +46,6 @@ int *coords;
 int *position_3d;
 float *velocity_3d;
 float *orientation_3d;
-float *ang_velocity_3d;
 
 control_mode current_mode;
 control_mode new_mode;
@@ -105,10 +104,6 @@ int main()
     orientation_3d[0] = 0;
     orientation_3d[1] = 0;
     orientation_3d[2] = 0;
-    ang_velocity_3d = (float *)malloc(sizeof(float) * 3);
-    ang_velocity_3d[0] = 0;
-    ang_velocity_3d[1] = 0;
-    ang_velocity_3d[2] = 0;
 
     fan_state = false;
     current_movement_state = STATE_STOP;
@@ -153,7 +148,7 @@ int main()
     while (true)
     {
         // send battery level, coordinates and IMU data every 1 second
-        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 2.0)
+        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 0.5)
         {
             // sendBattery(&socket, &battery_reader);
 
@@ -316,5 +311,4 @@ int main()
     free(coords);
     free(position_3d);
     free(orientation_3d);
-    free(ang_velocity_3d);
 }

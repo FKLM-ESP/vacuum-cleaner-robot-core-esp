@@ -51,19 +51,19 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
             https://msl.cs.uiuc.edu/planning/img814.gif
         */
         new_vel[0] = VEL_X + (
-                    + 100 * accData.xAxis.raw * cos(YAW) * cos(PITCH)
-                    + 100 * accData.yAxis.raw * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
-                    + 100 * accData.zAxis.raw * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
+                    + 100 * accData.xAxis.scaled * GRAVITY *  cos(YAW) * cos(PITCH)
+                    + 100 * accData.yAxis.scaled * GRAVITY * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
+                    + 100 * accData.zAxis.scaled * GRAVITY * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
                     ) * delta_s; 
         new_vel[1] = VEL_Y + (
-                    + 100 * accData.xAxis.raw * sin(YAW) * cos(PITCH)
-                    + 100 * accData.yAxis.raw * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
-                    + 100 * accData.zAxis.raw * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
+                    + 100 * accData.xAxis.scaled * GRAVITY * sin(YAW) * cos(PITCH)
+                    + 100 * accData.yAxis.scaled * GRAVITY * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
+                    + 100 * accData.zAxis.scaled * GRAVITY * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
                     ) * delta_s;
         new_vel[2] = VEL_Z + (
-                    - 100 * accData.xAxis.raw * sin(PITCH)
-                    + 100 * accData.yAxis.raw * cos(PITCH) * sin(ROLL)
-                    + 100 * accData.zAxis.raw * cos(PITCH) * cos(ROLL)
+                    - 100 * accData.xAxis.scaled * GRAVITY * sin(PITCH)
+                    + 100 * accData.yAxis.scaled * GRAVITY * cos(PITCH) * sin(ROLL)
+                    + 100 * accData.zAxis.scaled * GRAVITY * cos(PITCH) * cos(ROLL)
                     ) * delta_s;
 
         new_pos[0] = VEL_X + (
@@ -93,11 +93,7 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
             frame of reference (see above comment and links)
         */
 
-        new_ang_vel[0] = ANG_VEL_YAW + (gyroData.zAxis.raw * delta_s);
-        new_ang_vel[1] = ANG_VEL_PITCH - (gyroData.xAxis.raw * delta_s); 
-        new_ang_vel[2] = ANG_VEL_ROLL + (gyroData.yAxis.raw * delta_s);
-
-        new_or[0] = new_ang_vel[0] + (gyroData.zAxis.raw * delta_s);
+        new_or[0] = YAW + (gyroData.zAxis.scaled / 180 * PI * delta_s);
         // Keep it in range. We don't care for pitch and roll (if imu is flat enough on the robot)
         if (new_or[0] > 6.28319)
         {
@@ -107,13 +103,12 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
         {
           new_or[0] += 6.28319;
         }
-        new_or[1] = new_ang_vel[1] + (gyroData.xAxis.raw * delta_s);
-        new_or[2] = new_ang_vel[2] + (gyroData.yAxis.raw * delta_s);
+        new_or[1] = PITCH - (gyroData.xAxis.scaled / 180 * PI * delta_s);
+        new_or[2] = ROLL + (gyroData.yAxis.scaled / 180 * PI * delta_s);
 
         memcpy(position_3d, new_pos, sizeof(int) * 3);
         memcpy(velocity_3d, new_vel, sizeof(float) * 3);
         memcpy(orientation_3d, new_or, sizeof(float) * 3);
-        memcpy(ang_velocity_3d, new_ang_vel, sizeof(float) * 3);
 
         // Very low speed so 5ms _should_ be enough
         thread_sleep_for(5);

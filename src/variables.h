@@ -5,7 +5,7 @@
 #include <types.h>
 
 // CONSTANTS
-#define MAX_COORDS 1024
+#define MAX_COORDS 128
 const int bytesPerCoord = sizeof(int);
 const int bytesPerIMUValue = sizeof(float);
 
@@ -19,6 +19,8 @@ const int bytesPerIMUValue = sizeof(float);
 
 // Scaling value for float to int conversion (UI IMU visualization)
 #define SCALING 10000
+#define GRAVITY (9.81 / 2)
+#define PI 3.141593
 
 // In rad - equivalent to around 2.85 deg
 #define YAW_TARGET_THRESH 0.05
@@ -65,8 +67,6 @@ extern int *position_3d;
 extern float *velocity_3d;
 // in radians?
 extern float *orientation_3d;
-// in rad/s
-extern float *ang_velocity_3d;
 
 extern control_mode new_mode; // controlled from the ui app to signal to the main loop to chenge current mode
 extern control_mode current_mode;
@@ -86,9 +86,5 @@ extern uint8_t new_movement_state;
 #define YAW     orientation_3d[0]
 #define PITCH   orientation_3d[1]
 #define ROLL    orientation_3d[2]
-
-#define ANG_VEL_YAW     ang_velocity_3d[0]
-#define ANG_VEL_PITCH   ang_velocity_3d[1]
-#define ANG_VEL_ROLL    ang_velocity_3d[2]
 
 #endif

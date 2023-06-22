@@ -24,14 +24,26 @@ void sendCoordinates(TCPSocket *socket)
     coordMsg[0] = 'c';
 
     // Copy saved coordinates
-    memcpy(coordMsg + 1, coords, sizeof(int) * currentCoordsSize);
+    for(int i = 0; i < currentCoordsSize; i++)
+    {
+        coordMsg[1 + i * sizeof(int) + 0] = coords[i] >> 24;
+        coordMsg[1 + i * sizeof(int) + 1] = coords[i] >> 16;
+        coordMsg[1 + i * sizeof(int) + 2] = coords[i] >> 8;
+        coordMsg[1 + i * sizeof(int) + 3] = coords[i];
+    }
 
     // Copy current coordinates
-    memcpy(coordMsg + 1 + sizeof(int) * currentCoordsSize, position_3d, sizeof(int) * 2);
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 0] = POS_X >> 24;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 1] = POS_X >> 16;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 2] = POS_X >> 8;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 3] = POS_X;
 
-    // TODO: test again
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 4] = POS_Y >> 24;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 5] = POS_Y >> 16;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 6] = POS_Y >> 8;
+    coordMsg[1 + currentCoordsSize * sizeof(int) + 7] = POS_Y;
 
-    //socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
+    socket->send(coordMsg, 1 + (currentCoordsSize + 2) * bytesPerCoord);
 }
 
 void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
@@ -58,8 +70,8 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     // "Conversions" to byte arrays are done by promoting the float to an integer by scaling it and then splitting it into bytes
 
     int mag_x = static_cast<int>(magData.xAxis.scaled * SCALING), mag_y = static_cast<int>(magData.yAxis.scaled * SCALING), mag_z = static_cast<int>(magData.zAxis.scaled * SCALING);
-    int gyr_x = static_cast<int>(gyroData.xAxis.scaled * SCALING), gyr_y = static_cast<int>(gyroData.yAxis.scaled * SCALING), gyr_z = static_cast<int>(gyroData.zAxis.scaled * SCALING);
-    int acc_x = static_cast<int>(accData.xAxis.scaled * SCALING), acc_y = static_cast<int>(accData.yAxis.scaled * SCALING), acc_z = static_cast<int>(accData.zAxis.scaled * SCALING);
+    int gyr_x = static_cast<int>(gyroData.xAxis.scaled / 180 * PI * SCALING), gyr_y = static_cast<int>(gyroData.yAxis.scaled / 180 * PI * SCALING), gyr_z = static_cast<int>(gyroData.zAxis.scaled / 180 * PI * SCALING);
+    int acc_x = static_cast<int>(accData.xAxis.scaled * GRAVITY * SCALING), acc_y = static_cast<int>(accData.yAxis.scaled * GRAVITY * SCALING), acc_z = static_cast<int>(accData.zAxis.scaled * GRAVITY * SCALING);
 
     imuMsg[1] = mag_x >> 24;
     imuMsg[2] = mag_x >> 16;
@@ -97,6 +109,11 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     imuMsg[34] = acc_z >> 16;
     imuMsg[35] = acc_z >> 8;
     imuMsg[36] = acc_z;
+
+    
+    printf("GYRO xAxis (dps) = %5.1f\n", gyroData.xAxis.scaled / 180 * PI);
+    printf("GYRO yAxis (dps) = %5.1f\n", gyroData.yAxis.scaled / 180 * PI);
+    printf("GYRO zAxis (dps) = %5.1f\n\n", gyroData.zAxis.scaled / 180 * PI);
 
     socket->send(imuMsg, sizeof imuMsg);
 }
