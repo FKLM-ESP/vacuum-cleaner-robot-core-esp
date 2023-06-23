@@ -12,7 +12,7 @@
     "check for collision" loop again.
 */
 
-void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket)
+void autoClean()
 {
     if (current_movement_state == STATE_STOP)
     {
@@ -22,10 +22,10 @@ void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket)
     while (true)
     {
         // collision "imminent"
-        if (sensor_1->distance() < DISTANCE_SENSOR_THRESH ||
-            sensor_2->distance() < DISTANCE_SENSOR_THRESH)
+        if (sensor_1.distance() < DISTANCE_SENSOR_THRESH ||
+            sensor_2.distance() < DISTANCE_SENSOR_THRESH)
         {
-            sendLog(socket, "Detected obstacle, STOPping");
+            sendLog(&socket, "Detected obstacle, STOPping");
 
             current_movement_state = STATE_STOP;
 
@@ -48,7 +48,7 @@ void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket)
                 target_yaw += 6.28319;
             }
 
-            sendLog(socket, "Rotating by " + std::to_string(rotation_amount) + " radians counter-clockwise");
+            sendLog(&socket, "Rotating by " + std::to_string(rotation_amount) + " radians counter-clockwise");
 
             // Yaw is counter-clockwise, so we select rotation direction accordingly
             current_movement_state = (rotation_amount < 3.14159) ? 
@@ -59,7 +59,7 @@ void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket)
             while (target_yaw - YAW_TARGET_THRESH > YAW ||
                    target_yaw + YAW_TARGET_THRESH < YAW) {}
 
-            sendLog(socket, "Reached target heading, STOPping rotation, moving FORWARD");
+            sendLog(&socket, "Reached target heading, STOPping rotation, moving FORWARD");
 
             current_movement_state = STATE_STOP;
 

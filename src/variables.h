@@ -3,6 +3,9 @@
 
 #include "mbed.h"
 #include <types.h>
+#include <../lib/Ultrasonic/Ultrasonic.h>
+#include "ESP8266Interface.h"
+#include "TCPSocket.h"
 
 // CONSTANTS
 #define MAX_COORDS 128
@@ -86,5 +89,10 @@ extern uint8_t new_movement_state;
 #define YAW     orientation_3d[0]
 #define PITCH   orientation_3d[1]
 #define ROLL    orientation_3d[2]
+
+extern Ultrasonic sensor_1;
+extern Ultrasonic sensor_2;
+extern TCPSocket socket;
+extern ESP8266Interface wifi;
 
 #endif

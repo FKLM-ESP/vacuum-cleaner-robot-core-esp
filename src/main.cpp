@@ -20,6 +20,7 @@
 
 // communication variables
 ESP8266Interface wifi(PA_9, PB_3);
+TCPSocket socket;
 
 // IMU
 I2C imu_i2c(PB_9, PB_8);
@@ -106,11 +107,9 @@ int main()
 
     // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, true, &led_test, &led_fan);
 
-    TCPSocket socket;
-
-    if (0 == connect_to_wifi(&wifi))
+    if (0 == connect_to_wifi())
     {
-        connect_to_socket(&wifi, &socket);
+        connect_to_socket();
     }
 
     /***********************************************************************************
@@ -169,9 +168,19 @@ int main()
     timerCoordinates.start();
     timerBatteries.start();
 
-    // TODO: start imu reading thread
+    // not reused, can be a variable
+    Thread imu_reader_thread; 
+    // reused, need to be pointers that are allocated every time
+    Thread *auto_mode_thread;
+    Thread *wifi_connector_thread;
+    Thread *socket_connector_thread;
 
-    // TODO: start auto mode thread
+    // Start imu reading thread
+    imu_reader_thread.start(callback(imu_read_and_update_coords, &imu));
+
+    // Start auto mode thread
+    auto_mode_thread = new Thread;
+    auto_mode_thread->start(autoClean);
 
     sendLog(&socket, "Starting main loop");
 
@@ -184,8 +193,9 @@ int main()
         {
             if (current_mode == automatic)
             {
-                // TODO: Stop auto thread
-                
+                // Stop auto thread
+                auto_mode_thread->terminate();
+                delete auto_mode_thread;
 
                 // Set current_mode to new_mode
                 current_mode = new_mode;
@@ -209,7 +219,9 @@ int main()
                 // Set current_mode to automatic
                 current_mode = automatic;
 
-                // TODO: Start auto thread
+                // Start auto thread
+                auto_mode_thread = new Thread;
+                auto_mode_thread->start(autoClean);
 
                 // Turn on the fan
                 led_fan = 1;
@@ -255,8 +267,43 @@ int main()
             break;
         }
 
-        // TODO: check for wifi and socket connection status
-        //     if not connected, launch reconnection in new threads
+        // Check for wifi connection, if not connected and thread not running start it
+        if (wifi_connector_thread != NULL &&
+            (wifi_connector_thread->get_state() == rtos::Thread::State::Deleted ||
+            wifi_connector_thread->get_state() == rtos::Thread::State::Inactive) )
+        {
+            wifi_connector_thread->terminate();
+            delete wifi_connector_thread;
+        }
+
+        // Reuse battery timer to avoid continuous connection attempts
+        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 19.0 &&
+            wifi_connector_thread == NULL &&
+            (wifi.get_connection_status() < 0 ||
+            wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
+        {
+            wifi_connector_thread = new Thread;
+            wifi_connector_thread->start(connect_to_wifi);
+        }
+
+        // Check for wifi connection, if not connected and threda not running start it
+        if (socket_connector_thread != NULL &&
+            (socket_connector_thread->get_state() == rtos::Thread::State::Deleted ||
+            socket_connector_thread->get_state() == rtos::Thread::State::Inactive) )
+        {
+            socket_connector_thread->terminate();
+            delete socket_connector_thread;
+        }
+
+        // Reuse battery timer to avoid continuous connection attempts
+        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 19.0 &&
+            socket_connector_thread == NULL &&
+            wifi.get_connection_status() >= 0 &&
+            wifi.get_connection_status() != NSAPI_STATUS_DISCONNECTED)
+        {
+            socket_connector_thread = new Thread;
+            socket_connector_thread->start(connect_to_socket);
+        }
 
         // check for timers expiration and send messages
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
