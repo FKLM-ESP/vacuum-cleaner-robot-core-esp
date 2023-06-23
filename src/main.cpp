@@ -183,13 +183,17 @@ int main()
                 // TODO: Stop auto thread,
                 //    set current_mode to new_mode,
                 //    set new_movement_state and current_movement_state to STATE_STOP
+
+                led_fan = 0;
             }
 
             if (new_mode == automatic)
             {
                 // TODO: set new_movement_state and current_movement_state to STATE_STOP,
-                //        set current_mode to automatic,
-                //        start auto thread
+                //    set current_mode to automatic,
+                //    start auto thread
+
+                led_fan = 1;
             }
         }
 
@@ -201,6 +205,8 @@ int main()
             break;
 
         case manual:
+            led_fan = (fan_state) ? 1 : 0;
+            // fallthrough
         case automatic:
             if (current_movement_state != new_movement_state)
             {
