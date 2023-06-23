@@ -2,10 +2,7 @@
 #include "variables.h"
 #include "Ultrasonic.h"
 #include <stdlib.h>
+#include "WiFi_interface.h"
 
-/*
-    Current interfaces are just placeholders, check src/movement_planner.cpp for
-    implementation proposal/details.
-*/
-
-void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2);
+//void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket);
+void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *wifi);

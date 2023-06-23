@@ -24,13 +24,14 @@ bool connect_to_socket(ESP8266Interface *wifi, TCPSocket *socket)
     a.set_port(PORT);
     nsapi_error_t ret = socket->connect(a);
 
-    if (ret != NSAPI_ERROR_OK && ret != NSAPI_ERROR_IS_CONNECTED)
-    {
-        printf("\r\nCan't connect to UI app socket\r\n");
-    }
-    else
+    if (ret == NSAPI_ERROR_OK && ret != NSAPI_ERROR_IS_CONNECTED)
     {
         printf("Connected to socket!\r\n\r\n");
+    }
+    else if (ret != NSAPI_ERROR_IS_CONNECTED)
+    {
+        printf("\r\nCan't connect to UI app socket\r\n");
+
     }
 
     return ret == NSAPI_ERROR_OK;

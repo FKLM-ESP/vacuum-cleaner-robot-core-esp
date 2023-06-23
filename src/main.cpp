@@ -15,6 +15,8 @@
 // our includes
 #include "hardware_checks.h"
 #include "wifi_and_socket_connection.h"
+#include "imu_reader.h"
+#include "movement_planner.h"
 
 // communication variables
 ESP8266Interface wifi(PA_9, PB_3);
@@ -171,6 +173,8 @@ int main()
 
     // TODO: start auto mode thread
 
+    sendLog(&socket, "Starting main loop");
+
     while (true)
     {
         readCommand(&socket);
@@ -180,20 +184,44 @@ int main()
         {
             if (current_mode == automatic)
             {
-                // TODO: Stop auto thread,
-                //    set current_mode to new_mode,
-                //    set new_movement_state and current_movement_state to STATE_STOP
+                // TODO: Stop auto thread
+                
 
+                // Set current_mode to new_mode
+                current_mode = new_mode;
+
+                // Set new_movement_state and current_movement_state to STATE_STOP
+                new_movement_state = STATE_STOP;
+                current_movement_state = STATE_STOP;
+
+                // Turn off the fan
                 led_fan = 0;
+
+                sendLog(&socket, "Exited automatic mode, stopped auto thread and fan");
             }
 
             if (new_mode == automatic)
             {
-                // TODO: set new_movement_state and current_movement_state to STATE_STOP,
-                //    set current_mode to automatic,
-                //    start auto thread
+                // Set new_movement_state and current_movement_state to STATE_STOP
+                new_movement_state = STATE_STOP;
+                current_movement_state = STATE_STOP;
 
+                // Set current_mode to automatic
+                current_mode = automatic;
+
+                // TODO: Start auto thread
+
+                // Turn on the fan
                 led_fan = 1;
+
+                sendLog(&socket, "Changed mode to automatic, started auto thread and fan");
+            }
+            else if (new_mode == manual)
+            {
+                sendLog(&socket, "Changed mode to manual");
+            } else
+            {
+                sendLog(&socket, "Changed mode to test");
             }
         }
 
@@ -227,11 +255,10 @@ int main()
             break;
         }
 
-        // OPTIONAL: check for wifi and socket connection status
+        // TODO: check for wifi and socket connection status
         //     if not connected, launch reconnection in new threads
 
         // check for timers expiration and send messages
-        // could add check for active socket, but cannot find how (?)
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
         {
             sendIMU(&socket, &imu);

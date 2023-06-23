@@ -12,19 +12,21 @@
     "check for collision" loop again.
 */
 
-void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2)
+void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2, TCPSocket *socket)
 {
     if (current_movement_state == STATE_STOP)
     {
         current_movement_state = STATE_FORWARD;
     }
-    
+
     while (true)
     {
         // collision "imminent"
         if (sensor_1->distance() < DISTANCE_SENSOR_THRESH ||
             sensor_2->distance() < DISTANCE_SENSOR_THRESH)
         {
+            sendLog(socket, "Detected obstacle, STOPping");
+
             current_movement_state = STATE_STOP;
 
             // Save current coordinates to memory
@@ -46,6 +48,8 @@ void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2)
                 target_yaw += 6.28319;
             }
 
+            sendLog(socket, "Rotating by " + std::to_string(rotation_amount) + " radians counter-clockwise");
+
             // Yaw is counter-clockwise, so we select rotation direction accordingly
             current_movement_state = (rotation_amount < 3.14159) ? 
                                         STATE_LEFT : 
@@ -55,9 +59,11 @@ void autoClean(Ultrasonic *sensor_1, Ultrasonic *sensor_2)
             while (target_yaw - YAW_TARGET_THRESH > YAW ||
                    target_yaw + YAW_TARGET_THRESH < YAW) {}
 
+            sendLog(socket, "Reached target heading, STOPping rotation, moving FORWARD");
+
             current_movement_state = STATE_STOP;
 
-            // Give time for the robot to stop
+            // Give time for main to actually stop the motors
             // TODO: check if there are minimum requirements for the motors
             thread_sleep_for(50);
 
