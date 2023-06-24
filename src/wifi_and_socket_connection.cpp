@@ -26,6 +26,7 @@ bool connect_to_socket()
 
     if (ret == NSAPI_ERROR_OK && ret != NSAPI_ERROR_IS_CONNECTED)
     {
+        socket.set_blocking(false);
         printf("Connected to socket!\r\n\r\n");
     }
     else if (ret != NSAPI_ERROR_IS_CONNECTED)

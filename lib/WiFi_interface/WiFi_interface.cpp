@@ -111,9 +111,9 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     imuMsg[36] = acc_z;
 
     
-    printf("GYRO xAxis (dps) = %5.1f\n", gyroData.xAxis.scaled / 180 * PI);
-    printf("GYRO yAxis (dps) = %5.1f\n", gyroData.yAxis.scaled / 180 * PI);
-    printf("GYRO zAxis (dps) = %5.1f\n\n", gyroData.zAxis.scaled / 180 * PI);
+    // printf("GYRO xAxis (dps) = %5.1f\n", gyroData.xAxis.scaled / 180 * PI);
+    // printf("GYRO yAxis (dps) = %5.1f\n", gyroData.yAxis.scaled / 180 * PI);
+    // printf("GYRO zAxis (dps) = %5.1f\n\n", gyroData.zAxis.scaled / 180 * PI);
 
     socket->send(imuMsg, sizeof imuMsg);
 }
@@ -128,24 +128,25 @@ void readCommand(TCPSocket *socket)
     // Should only receive messages one byte long
     int buffer_size = 1;
 
-    uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * buffer_size);
+    uint8_t buffer = 0;
 
-    if (socket->recv(buffer, buffer_size) == NSAPI_ERROR_OK)
+    nsapi_size_or_error_t ret = socket->recv(&buffer, buffer_size);
+    if (ret > 0)
     {
-        switch (buffer[0])
+        switch (buffer)
         {
         case FAN_ON:
         case FAN_OFF:
             if (current_mode != automatic)
             {
-                fan_state = (buffer[0] & 0x40);
+                fan_state = (buffer & 0x40);
                 printf("Fan set to %d\n", fan_state);
             }
             break;
 
         case AUTO_ON:
         case AUTO_OFF:
-            new_mode = (buffer[0] & 0x10) ? automatic : manual;
+            new_mode = (buffer & 0x10) ? automatic : manual;
             printf("Mode set to %s\n", (new_mode == automatic) ? "automatic" : "manual");
             break;
 
@@ -160,7 +161,7 @@ void readCommand(TCPSocket *socket)
         case STATE_RIGHT:
             if (new_movement_state == STATE_STOP)
             {
-                new_movement_state = buffer[0];
+                new_movement_state = buffer;
                 printf("State set to %d\n", new_movement_state);
             }
             break;
@@ -170,12 +171,10 @@ void readCommand(TCPSocket *socket)
             break;
         }
     }
+    else
+    {
+        if (ret != NSAPI_ERROR_WOULD_BLOCK && ret != NSAPI_ERROR_OK)
+            printf("TCP Socket closed with error, %d\n", ret);
+    }
 
-    /*
-        Given the limited software scope of the project I think it's enough to print that the socket
-        is gone and forget about it, otherwise we can return some error code and main will now that
-        something is wrong and try and reconnect, but that would be a big headache since it would
-        involve reconnecting to the wifi as well
-    */
-    printf("TCP Socket closed with an error\n");
 }

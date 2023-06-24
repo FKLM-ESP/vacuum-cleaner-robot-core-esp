@@ -84,8 +84,8 @@ int main()
     fan_state = false;
     current_movement_state = STATE_STOP;
     new_movement_state = STATE_STOP;
-    current_mode = automatic;
-    new_mode = automatic;
+    current_mode = manual;
+    new_mode = manual;
 
     printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
@@ -116,26 +116,26 @@ int main()
      * TEST AREA
      ***********************************************************************************/
 
-    Timer timer;
-    timer.start();
+    // Timer timer;
+    // timer.start();
 
-    while (true)
-    {
-        // send battery level, coordinates and IMU data every 1 second
-        if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 0.5)
-        {
-            sendBattery(&socket, &battery_reader);
+    // while (true)
+    // {
+    //     // send battery level, coordinates and IMU data every 1 second
+    //     if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 0.5)
+    //     {
+    //         sendBattery(&socket, &battery_reader);
 
-            // sendLog(&socket, "Test");
+    //         // sendLog(&socket, "Test");
 
-            sendCoordinates(&socket);
+    //         sendCoordinates(&socket);
 
-            sendIMU(&socket, &imu);
+    //         sendIMU(&socket, &imu);
 
-            timer.reset();
+    //         timer.reset();
             
-        }
-    }
+    //     }
+    // }
 
     /***********************************************************************************
      * END OF TEST AREA
@@ -162,33 +162,32 @@ int main()
             - set motor controller state
     */
 
-#if 0
+#if 1
     Timer timerImu, timerCoordinates, timerBatteries;
     timerImu.start();
     timerCoordinates.start();
     timerBatteries.start();
 
-    // not reused, can be a variable
+    // // not reused, can be a variable
     Thread imu_reader_thread; 
-    // reused, need to be pointers that are allocated every time
-    Thread *auto_mode_thread;
-    Thread *wifi_connector_thread;
-    Thread *socket_connector_thread;
+    // // reused, need to be pointers that are allocated every time
+    Thread *auto_mode_thread = NULL;
+    Thread *wifi_connector_thread = NULL;
+    //Thread *socket_connector_thread = NULL;
 
     // Start imu reading thread
     imu_reader_thread.start(callback(imu_read_and_update_coords, &imu));
 
     // Start auto mode thread
-    auto_mode_thread = new Thread;
-    auto_mode_thread->start(autoClean);
+    // auto_mode_thread = new Thread;
+    // auto_mode_thread->start(autoClean);
 
     sendLog(&socket, "Starting main loop");
 
     while (true)
     {
         readCommand(&socket);
-
-        // handle mode changes first
+        //handle mode changes first
         if (current_mode != new_mode)
         {
             if (current_mode == automatic)
@@ -196,9 +195,7 @@ int main()
                 // Stop auto thread
                 auto_mode_thread->terminate();
                 delete auto_mode_thread;
-
-                // Set current_mode to new_mode
-                current_mode = new_mode;
+                auto_mode_thread = NULL;
 
                 // Set new_movement_state and current_movement_state to STATE_STOP
                 new_movement_state = STATE_STOP;
@@ -216,9 +213,6 @@ int main()
                 new_movement_state = STATE_STOP;
                 current_movement_state = STATE_STOP;
 
-                // Set current_mode to automatic
-                current_mode = automatic;
-
                 // Start auto thread
                 auto_mode_thread = new Thread;
                 auto_mode_thread->start(autoClean);
@@ -231,17 +225,21 @@ int main()
             else if (new_mode == manual)
             {
                 sendLog(&socket, "Changed mode to manual");
-            } else
+            } 
+            else
             {
                 sendLog(&socket, "Changed mode to test");
             }
+            
+            // Set current_mode to new_mode
+            current_mode = new_mode;
         }
 
         switch (current_mode)
         {
         case test:
             run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, false, &led_test, &led_fan);
-            current_mode = manual;
+            new_mode = manual;
             break;
 
         case manual:
@@ -274,10 +272,11 @@ int main()
         {
             wifi_connector_thread->terminate();
             delete wifi_connector_thread;
+            wifi_connector_thread = NULL;
         }
 
         // Reuse battery timer to avoid continuous connection attempts
-        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 19.0 &&
+        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
             wifi_connector_thread == NULL &&
             (wifi.get_connection_status() < 0 ||
             wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
@@ -286,24 +285,25 @@ int main()
             wifi_connector_thread->start(connect_to_wifi);
         }
 
-        // Check for wifi connection, if not connected and threda not running start it
-        if (socket_connector_thread != NULL &&
-            (socket_connector_thread->get_state() == rtos::Thread::State::Deleted ||
-            socket_connector_thread->get_state() == rtos::Thread::State::Inactive) )
-        {
-            socket_connector_thread->terminate();
-            delete socket_connector_thread;
-        }
+        // // Check for socket connection, if not connected and thread not running start it
+        // if (socket_connector_thread != NULL &&
+        //     (socket_connector_thread->get_state() == rtos::Thread::State::Deleted ||
+        //     socket_connector_thread->get_state() == rtos::Thread::State::Inactive) )
+        // {
+        //     socket_connector_thread->terminate();
+        //     delete socket_connector_thread;
+        //     socket_connector_thread = NULL;
+        // }
 
-        // Reuse battery timer to avoid continuous connection attempts
-        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 19.0 &&
-            socket_connector_thread == NULL &&
-            wifi.get_connection_status() >= 0 &&
-            wifi.get_connection_status() != NSAPI_STATUS_DISCONNECTED)
-        {
-            socket_connector_thread = new Thread;
-            socket_connector_thread->start(connect_to_socket);
-        }
+        // // Reuse battery timer to avoid continuous connection attempts
+        // if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
+        //     socket_connector_thread == NULL &&
+        //     wifi.get_connection_status() >= 0 &&
+        //     wifi.get_connection_status() != NSAPI_STATUS_DISCONNECTED)
+        // {
+        //     socket_connector_thread = new Thread;
+        //     socket_connector_thread->start(connect_to_socket);
+        // }
 
         // check for timers expiration and send messages
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
@@ -313,6 +313,7 @@ int main()
         }
         if (std::chrono::duration<float>{timerCoordinates.elapsed_time()}.count() >= 10.0)
         {
+            printf("I am alive!\n");
             sendCoordinates(&socket);
             timerCoordinates.reset();
         }
