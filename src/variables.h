@@ -16,19 +16,20 @@ const int bytesPerIMUValue = sizeof(float);
 #define WIFI_SSID "ExtRouter"
 #define WIFI_PASSWORD "easy-p@ss87"
 #define PORT 9000
-// #define IP_ADDR "192.168.1.10" // Lorenzo phone
+#define IP_ADDR "192.168.1.10" // Lorenzo phone
 // #define IP_ADDR "192.168.1.11"  // Khalil phone
-#define IP_ADDR "192.168.1.12"  // Filip phone
+// #define IP_ADDR "192.168.1.12"  // Filip phone
 
 // Scaling value for float to int conversion (UI IMU visualization)
 #define SCALING 10000
-#define GRAVITY (9.81 / 2)
+#define GRAVITY 9.81
+#define GRAVITY_MULTIPLIER 9.81
 #define PI 3.141593
 
 // In rad - equivalent to around 2.85 deg
-#define YAW_TARGET_THRESH 0.05
+#define YAW_TARGET_THRESH 0.5  // 0.05
 // In cm
-#define DISTANCE_SENSOR_THRESH 15
+#define DISTANCE_SENSOR_THRESH 15.0
 
 /* Control constants
     Note that uint8_t and hex values can be compared directly

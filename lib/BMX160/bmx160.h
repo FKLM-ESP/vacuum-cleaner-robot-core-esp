@@ -479,6 +479,15 @@ public:
     ///
     ///@returns 0 on success, non 0 on failure
     int32_t setSensorPowerMode(Sensors sensor, PowerModes pwrMode);
+
+    ///@brief Start fast offset calibration through CMD register.\n
+    ///@details Observe command execution times given in datasheet.\n 
+    ///
+    ///On Exit:
+    ///@param[out] 
+    ///
+    ///@returns 0 on success, non 0 on failure
+    int32_t startFastCalibration();
     
     
     ///@brief Configure sensor.\n

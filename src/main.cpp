@@ -104,6 +104,9 @@ int main()
     }
     imu.setMagnConf(); //initialize magnetometer for regular preset.
     thread_sleep_for(100);
+    if(imu.startFastCalibration()) {
+        printf("Failed to start fast calibration.\n");
+    }
 
     // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, true, &led_test, &led_fan);
 
@@ -199,7 +202,6 @@ int main()
 
                 // Set new_movement_state and current_movement_state to STATE_STOP
                 new_movement_state = STATE_STOP;
-                current_movement_state = STATE_STOP;
 
                 // Turn off the fan
                 led_fan = 0;
@@ -211,7 +213,6 @@ int main()
             {
                 // Set new_movement_state and current_movement_state to STATE_STOP
                 new_movement_state = STATE_STOP;
-                current_movement_state = STATE_STOP;
 
                 // Start auto thread
                 auto_mode_thread = new Thread;
@@ -309,11 +310,11 @@ int main()
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
         {
             sendIMU(&socket, &imu);
+            printf("X: %d\tY: %d\tZ: %d\tVel_x: %2.4f\tVel_y: %2.4f\tVel_z: %2.4f\tYaw: %2.4f\tPitch: %2.4f\tRoll: %2.4f\n", POS_X, POS_Y, POS_Z, VEL_X, VEL_Y, VEL_Z, YAW, PITCH, ROLL);
             timerImu.reset();
         }
         if (std::chrono::duration<float>{timerCoordinates.elapsed_time()}.count() >= 10.0)
         {
-            printf("I am alive!\n");
             sendCoordinates(&socket);
             timerCoordinates.reset();
         }

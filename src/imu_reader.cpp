@@ -33,7 +33,7 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
 
         last_time = new_time;
 
-        imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
+        imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_2G, (BMI160::GyroRange)(0));
         imu->getMagSensorXYZ(magData);
 
         /*
@@ -49,37 +49,44 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
             https://msl.cs.uiuc.edu/planning/node102.html
             https://msl.cs.uiuc.edu/planning/img814.gif
         */
-        new_vel[0] = VEL_X + (
-                    + 100 * accData.xAxis.scaled * GRAVITY *  cos(YAW) * cos(PITCH)
-                    + 100 * accData.yAxis.scaled * GRAVITY * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
-                    + 100 * accData.zAxis.scaled * GRAVITY * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
-                    ) * delta_s; 
-        new_vel[1] = VEL_Y + (
-                    + 100 * accData.xAxis.scaled * GRAVITY * sin(YAW) * cos(PITCH)
-                    + 100 * accData.yAxis.scaled * GRAVITY * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
-                    + 100 * accData.zAxis.scaled * GRAVITY * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
-                    ) * delta_s;
-        new_vel[2] = VEL_Z + (
-                    - 100 * accData.xAxis.scaled * GRAVITY * sin(PITCH)
-                    + 100 * accData.yAxis.scaled * GRAVITY * cos(PITCH) * sin(ROLL)
-                    + 100 * accData.zAxis.scaled * GRAVITY * cos(PITCH) * cos(ROLL)
-                    ) * delta_s;
+        // new_vel[0] = VEL_X + (
+        //             + accData.xAxis.scaled * GRAVITY_MULTIPLIER *  cos(YAW) * cos(PITCH)
+        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
+        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
+        //             ) * delta_s; 
+        // new_vel[1] = VEL_Y + (
+        //             + accData.xAxis.scaled * GRAVITY_MULTIPLIER * sin(YAW) * cos(PITCH)
+        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
+        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
+        //             ) * delta_s;
+        // new_vel[2] = VEL_Z + (
+        //             - accData.xAxis.scaled * GRAVITY_MULTIPLIER * sin(PITCH)
+        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * cos(PITCH) * sin(ROLL)
+        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * cos(PITCH) * cos(ROLL)
+        //             ) * delta_s;
 
-        new_pos[0] = VEL_X + (
-                    + new_vel[0] * cos(YAW) * cos(PITCH)
-                    + new_vel[1] * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
-                    + new_vel[2] * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
-                    ) * delta_s; 
-        new_pos[1] = VEL_Y + (
-                    + new_vel[0] * sin(YAW) * cos(PITCH)
-                    + new_vel[1] * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
-                    + new_vel[2] * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
-                    ) * delta_s;
-        new_pos[2] = VEL_Z + (
-                    - new_vel[0] * sin(PITCH)
-                    + new_vel[1] * cos(PITCH) * sin(ROLL)
-                    + new_vel[2] * cos(PITCH) * cos(ROLL)
-                    ) * delta_s;
+        new_vel[0] = VEL_X + accData.xAxis.scaled * delta_s * GRAVITY_MULTIPLIER;
+        new_vel[1] = VEL_Y + accData.yAxis.scaled * delta_s * GRAVITY_MULTIPLIER;
+        new_vel[2] = VEL_Z + (accData.zAxis.scaled * GRAVITY_MULTIPLIER - GRAVITY) * delta_s;
+
+        new_pos[0] = POS_X + new_vel[0] * delta_s;
+        new_pos[1] = POS_Y + new_vel[1] * delta_s;
+        new_pos[2] = POS_Z + new_vel[2] * delta_s;
+        // new_pos[0] = VEL_X + (
+        //             + new_vel[0] * cos(YAW) * cos(PITCH)
+        //             + new_vel[1] * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
+        //             + new_vel[2] * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
+        //             ) * delta_s; 
+        // new_pos[1] = VEL_Y + (
+        //             + new_vel[0] * sin(YAW) * cos(PITCH)
+        //             + new_vel[1] * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
+        //             + new_vel[2] * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
+        //             ) * delta_s;
+        // new_pos[2] = VEL_Z + (
+        //             - new_vel[0] * sin(PITCH)
+        //             + new_vel[1] * cos(PITCH) * sin(ROLL)
+        //             + new_vel[2] * cos(PITCH) * cos(ROLL)
+        //             ) * delta_s;
 
         /*
           update orientation
@@ -104,6 +111,8 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
         }
         new_or[1] = PITCH - (gyroData.xAxis.scaled / 180 * PI * delta_s);
         new_or[2] = ROLL + (gyroData.yAxis.scaled / 180 * PI * delta_s);
+
+        //printf("Acc_x: %2.4f\tAcc_y: %2.4f\tAcc_z: %2.4f\n", accData.xAxis.scaled * GRAVITY_MULTIPLIER, accData.yAxis.scaled * GRAVITY_MULTIPLIER, accData.zAxis.scaled * GRAVITY_MULTIPLIER);
 
         memcpy(position_3d, new_pos, sizeof(int) * 3);
         memcpy(velocity_3d, new_vel, sizeof(float) * 3);

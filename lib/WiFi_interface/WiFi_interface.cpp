@@ -54,7 +54,7 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     BMI160::SensorData magData;
     BMI160::SensorTime sensorTime;
 
-    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
+    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_2G, (BMI160::GyroRange)(0));
     imu->getMagSensorXYZ(magData);
 
     uint8_t imuMsg[1 + bytesPerIMUValue * 9];
@@ -71,7 +71,7 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
 
     int mag_x = static_cast<int>(magData.xAxis.scaled * SCALING), mag_y = static_cast<int>(magData.yAxis.scaled * SCALING), mag_z = static_cast<int>(magData.zAxis.scaled * SCALING);
     int gyr_x = static_cast<int>(gyroData.xAxis.scaled / 180 * PI * SCALING), gyr_y = static_cast<int>(gyroData.yAxis.scaled / 180 * PI * SCALING), gyr_z = static_cast<int>(gyroData.zAxis.scaled / 180 * PI * SCALING);
-    int acc_x = static_cast<int>(accData.xAxis.scaled * GRAVITY * SCALING), acc_y = static_cast<int>(accData.yAxis.scaled * GRAVITY * SCALING), acc_z = static_cast<int>(accData.zAxis.scaled * GRAVITY * SCALING);
+    int acc_x = static_cast<int>(accData.xAxis.scaled * GRAVITY_MULTIPLIER * SCALING), acc_y = static_cast<int>(accData.yAxis.scaled * GRAVITY_MULTIPLIER * SCALING), acc_z = static_cast<int>(accData.zAxis.scaled * GRAVITY_MULTIPLIER * SCALING);
 
     imuMsg[1] = mag_x >> 24;
     imuMsg[2] = mag_x >> 16;

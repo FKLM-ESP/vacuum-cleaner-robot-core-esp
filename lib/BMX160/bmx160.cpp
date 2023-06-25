@@ -88,6 +88,17 @@ int32_t BMI160::setSensorPowerMode(Sensors sensor, PowerModes pwrMode)
     return rtnVal;
 }
 
+//*****************************************************************************
+int32_t BMI160::startFastCalibration()
+{
+    int32_t rtnVal = writeRegister(OFFSET_6, 0xC0);
+    rtnVal = writeRegister(FOC_CONF, 0x7D);
+    rtnVal = writeRegister(CMD, START_FOC);
+    thread_sleep_for(350);
+
+    return rtnVal;
+}
+
 
 //*****************************************************************************
 int32_t BMI160::setSensorConfig(const AccConfig &config)
