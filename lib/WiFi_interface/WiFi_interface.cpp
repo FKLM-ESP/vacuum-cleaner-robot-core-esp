@@ -124,7 +124,6 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
  */
 void readCommand(TCPSocket *socket)
 {
-
     // Should only receive messages one byte long
     int buffer_size = 1;
 
@@ -137,7 +136,7 @@ void readCommand(TCPSocket *socket)
         {
         case FAN_ON:
         case FAN_OFF:
-            if (current_mode != automatic)
+            if (current_mode == manual)
             {
                 fan_state = (buffer & 0x40);
                 printf("Fan set to %d\n", fan_state);
@@ -151,15 +150,18 @@ void readCommand(TCPSocket *socket)
             break;
 
         case STATE_STOP:
-            new_movement_state = STATE_STOP;
-            printf("State set to STOP\n");
+            if (current_mode == manual)
+            {
+                new_movement_state = STATE_STOP;
+                printf("State set to STOP\n");
+            }
             break;
 
         case STATE_FORWARD:
         case STATE_BACKWARD:
         case STATE_LEFT:
         case STATE_RIGHT:
-            if (new_movement_state == STATE_STOP)
+            if (current_movement_state == STATE_STOP && current_mode == manual)
             {
                 new_movement_state = buffer;
                 printf("State set to %d\n", new_movement_state);

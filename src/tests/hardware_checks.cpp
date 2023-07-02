@@ -21,7 +21,7 @@ int run_hw_check_routine(BMI160_I2C bmx, MotorController contr, Ultrasonic senso
     test_motor_controller(contr);
     printf("Motor controller tested.\n");
     
-    if (test_ultrasonic(sensor1) || test_ultrasonic(sensor2))
+    if (test_ultrasonic(sensor1))// || test_ultrasonic(sensor2))
     {
         *led_fan = 1;
         thread_sleep_for(2000);

@@ -14,8 +14,7 @@
 
 void autoClean()
 {
-    float right_sensor;
-    float left_sensor;
+    float sensor_value;
 
     if (current_movement_state == STATE_STOP)
     {
@@ -24,12 +23,10 @@ void autoClean()
 
     while (true)
     {
-        right_sensor = sensor_1.distance();
-        left_sensor = sensor_2.distance();
+        sensor_value = sensor_1.distance();
 
         // collision "imminent"
-        if (right_sensor < DISTANCE_SENSOR_THRESH ||
-            left_sensor < DISTANCE_SENSOR_THRESH)
+        if (sensor_value < DISTANCE_SENSOR_THRESH)
         {
             //sendLog(&socket, "CurrentCoordSize = " + std::to_string(currentCoordsSize));
             //sendLog(&socket, "Detected obstacle, STOPping");
