@@ -65,9 +65,9 @@ const int bytesPerIMUValue = sizeof(float);
 extern int currentCoordsSize; // increase by two with each new coordinate
 extern int *coords;
 
-// in cm
+// in m
 extern int *position_3d;
-// in cm/s
+// in m/s
 extern float *velocity_3d;
 // in radians?
 extern float *orientation_3d;

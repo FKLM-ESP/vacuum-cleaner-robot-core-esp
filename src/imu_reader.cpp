@@ -14,6 +14,50 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
     BMI160::SensorData magData;
     BMI160::SensorTime sensorTime;
 
+    // Calculate IMU pose with respect to the ground
+    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_2G, (BMI160::GyroRange)(0));
+    imu->getMagSensorXYZ(magData);
+
+    float Rx = accData.xAxis.scaled / 2 * GRAVITY;
+    float Ry = accData.yAxis.scaled / 2 * GRAVITY;
+    float Rz = accData.zAxis.scaled / 2 * GRAVITY;
+
+    // should be around 9.81, magnitude of the local g value
+    float R = sqrt(Rx * Rx +
+                   Ry * Ry +
+                   Rz * Rz);
+
+    // estimated new values
+    float Rx_est, Ry_est, Rz_est;
+
+    // estimated values at previous step
+    float Rx_est_old = Rx;
+    float Ry_est_old = Ry;
+    float Rz_est_old = Rz;
+    
+    // util variables
+    float Rate_Axz_avg, Rate_Ayz_avg, Rate_Axy_avg;
+
+    // estimated angles at previous step
+    float Axz_old, Ayz_old, Axy_old;
+
+    // estimated angles at current step
+    float Axz, Ayz, Axy;
+
+    // pose of the IMU with respect to earth's gravity
+    float Axz_0 = atan2f(Rx_est_old, Rz_est_old);
+    float Ayz_0 = atan2f(Ry_est_old, Rz_est_old);
+    float Axy_0 = atan2f(Rx_est_old, Ry_est_old);
+
+    // accelerations calculated from the gyro
+    float Rx_gyro;
+    float Ry_gyro;
+    float Rz_gyro;
+
+    // values of acceleration in the global frame of reference
+    float Accx_glob, Accy_glob, Accz_glob;
+
+    // calculated output vectors
     int new_pos[3];
     float new_vel[3];
     float new_or[3];
@@ -36,89 +80,87 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
         imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_2G, (BMI160::GyroRange)(0));
         imu->getMagSensorXYZ(magData);
 
-        /*
-          TODO: confirm orientation with the sensor mounted on the robot
+        Rx = accData.xAxis.scaled / 2 * GRAVITY;
+        Ry = accData.yAxis.scaled / 2 * GRAVITY;
+        Rz = accData.zAxis.scaled / 2 * GRAVITY;
 
-          For reference, the dot on chip is between the x and y axes (on the right and the left of the dot resp.)
-          It doesn't really matter since it only changes the initial orientation of the map, which is already
-            random depending on how the robot is placed on the ground.
-          The following code (actually the convention for YAW, PITCH and ROLL), assumes thath x points to the right,
-            y to the front and z to the top
-          
-          references for the orientation of the axes and the matrix: (yes, from Steven lol)
-            https://msl.cs.uiuc.edu/planning/node102.html
-            https://msl.cs.uiuc.edu/planning/img814.gif
-        */
-        // new_vel[0] = VEL_X + (
-        //             + accData.xAxis.scaled * GRAVITY_MULTIPLIER *  cos(YAW) * cos(PITCH)
-        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
-        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
-        //             ) * delta_s; 
-        // new_vel[1] = VEL_Y + (
-        //             + accData.xAxis.scaled * GRAVITY_MULTIPLIER * sin(YAW) * cos(PITCH)
-        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
-        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
-        //             ) * delta_s;
-        // new_vel[2] = VEL_Z + (
-        //             - accData.xAxis.scaled * GRAVITY_MULTIPLIER * sin(PITCH)
-        //             + accData.yAxis.scaled * GRAVITY_MULTIPLIER * cos(PITCH) * sin(ROLL)
-        //             + (accData.zAxis.scaled - GRAVITY) * GRAVITY_MULTIPLIER * cos(PITCH) * cos(ROLL)
-        //             ) * delta_s;
+        // Calculate new orientation of the imu
+        Axz_old = atan2f(Rx_est_old, Rz_est_old);
+        Rate_Axz_avg = (Axz_old + gyroData.yAxis.scaled / 180 * PI) / 2;
+        Axz = Axz_old + Rate_Axz_avg * delta_s;
 
-        new_vel[0] = VEL_X + accData.xAxis.scaled * delta_s * GRAVITY_MULTIPLIER;
-        new_vel[1] = VEL_Y + accData.yAxis.scaled * delta_s * GRAVITY_MULTIPLIER;
-        new_vel[2] = VEL_Z + (accData.zAxis.scaled * GRAVITY_MULTIPLIER - GRAVITY) * delta_s;
+        Ayz_old = atan2f(Ry_est_old, Rz_est_old);
+        Rate_Ayz_avg = (Ayz_old + gyroData.xAxis.scaled / 180 * PI) / 2;
+        Ayz = Ayz_old - Rate_Ayz_avg * delta_s;
+
+        Axy_old = atan2f(Rx_est_old, Ry_est_old);
+        Rate_Axy_avg = (Axy_old + gyroData.zAxis.scaled / 180 * PI) / 2;
+        Axy = Axy_old - Rate_Axy_avg * delta_s;
+
+        // Use orientation values to calculate orientation using gyro values
+        Rx_gyro = sin(Axz) / sqrt(1 + pow(cos(Axz), 2) * pow(tan(Ayz), 2));
+        Ry_gyro = sin(Ayz) / sqrt(1 + pow(cos(Ayz), 2) * pow(tan(Axz), 2));
+        Rz_gyro = ((Rz_est_old >= 0) ? 1 : -1) * sqrt(1 - pow(Rx_gyro, 2) - pow(Ry_gyro, 2));
+
+        // guide says something between 5 and 20, means how much you trust the gyro
+        float w_gyro = 15;
+
+        // estimate accelerations in the IMU frame of reference
+        Rx_est = (Rx + Rx_gyro * w_gyro) / (1 + w_gyro);
+        Ry_est = (Ry + Ry_gyro * w_gyro) / (1 + w_gyro);
+        Rz_est = (Rz + Rz_gyro * w_gyro) / (1 + w_gyro);
+
+        Rx_est_old = Rx_est;
+        Ry_est_old = Ry_est;
+        Rz_est_old = Rz_est;
+
+        // Project accelerations into global frame of reference (is it necessary???)
+        Accx_glob = Rx_est *  cos(Axy) * cos(Ayz)
+                    + Ry_est * (cos(Axy) * sin(Ayz) * sin(Axz) - sin(Axy) * cos(Axz))
+                     + Rz_est * (cos(Axy) * sin(Ayz) * cos(Axz) + sin(Axy) * sin(Axz));
+        Accy_glob =  Rx_est * sin(Axy) * cos(Ayz)
+                    + Ry_est * (sin(Axy) * sin(Ayz) * sin(Axz) + cos(Axy) * cos(Axz))
+                    + Rz_est * (sin(Axy) * sin(Ayz) * cos(Axz) - cos(Axy) * sin(Axz));
+        Accz_glob = Rx_est * sin(Ayz)
+                    + Ry_est * cos(Ayz) * sin(Axz)
+                    + Rz_est * GRAVITY_MULTIPLIER * cos(Ayz) * cos(Axz);
+
+        // otherwise
+        // Accx_glob = Rx_est;
+        // Accy_glob = Ry_est;
+        // Accz_glob = Rz_est;
+
+
+        // double integrate to get new velocity and acceleration
+        new_vel[0] = VEL_X + Accx_glob * delta_s;
+        new_vel[1] = VEL_Y + Accy_glob * delta_s;
+        new_vel[2] = VEL_Z + (Accz_glob - R) * delta_s;
 
         new_pos[0] = POS_X + new_vel[0] * delta_s;
         new_pos[1] = POS_Y + new_vel[1] * delta_s;
         new_pos[2] = POS_Z + new_vel[2] * delta_s;
-        // new_pos[0] = VEL_X + (
-        //             + new_vel[0] * cos(YAW) * cos(PITCH)
-        //             + new_vel[1] * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
-        //             + new_vel[2] * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL))
-        //             ) * delta_s; 
-        // new_pos[1] = VEL_Y + (
-        //             + new_vel[0] * sin(YAW) * cos(PITCH)
-        //             + new_vel[1] * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
-        //             + new_vel[2] * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL))
-        //             ) * delta_s;
-        // new_pos[2] = VEL_Z + (
-        //             - new_vel[0] * sin(PITCH)
-        //             + new_vel[1] * cos(PITCH) * sin(ROLL)
-        //             + new_vel[2] * cos(PITCH) * cos(ROLL)
-        //             ) * delta_s;
 
-        /*
-          update orientation
-          NOTE: if orientation of the IMU with respect to the robot is different these values will
-            will need to be swapped, or the signs changed
-            (it doesn't really matter since we are not exposing these values to the user at all,
-            for all we care the imu could be tilted 45° and the code would work)
-            
-          Sign of pitch variation is negative since it is the opposite direction of the considered
-            frame of reference (see above comment and links)
-        */
-
-        new_or[0] = YAW + (gyroData.zAxis.scaled / 180 * PI * delta_s);
+        // _0 values are subtracted to keep yaw, pitch and roll equal to zero in the initial condition
+        new_or[0] = Axy - Axy_0;
         // Keep it in range. We don't care for pitch and roll (if imu is flat enough on the robot)
         if (new_or[0] > 6.28319)
         {
-          new_or[0] -= 6.28319;
+            new_or[0] -= 6.28319;
         }
         else if (new_or[0] < 0)
         {
-          new_or[0] += 6.28319;
+            new_or[0] += 6.28319;
         }
-        new_or[1] = PITCH - (gyroData.xAxis.scaled / 180 * PI * delta_s);
-        new_or[2] = ROLL + (gyroData.yAxis.scaled / 180 * PI * delta_s);
+        new_or[1] = Ayz - Ayz_0;
+        new_or[2] = Axz - Axz_0;
 
-        //printf("Acc_x: %2.4f\tAcc_y: %2.4f\tAcc_z: %2.4f\n", accData.xAxis.scaled * GRAVITY_MULTIPLIER, accData.yAxis.scaled * GRAVITY_MULTIPLIER, accData.zAxis.scaled * GRAVITY_MULTIPLIER);
+        // printf("Acc_x: %2.4f\tAcc_y: %2.4f\tAcc_z: %2.4f\n", accData.xAxis.scaled * GRAVITY_MULTIPLIER, accData.yAxis.scaled * GRAVITY_MULTIPLIER, accData.zAxis.scaled * GRAVITY_MULTIPLIER);
 
         memcpy(position_3d, new_pos, sizeof(int) * 3);
         memcpy(velocity_3d, new_vel, sizeof(float) * 3);
         memcpy(orientation_3d, new_or, sizeof(float) * 3);
 
         // Very low speed so 5ms _should_ be enough
-        thread_sleep_for(5);
+        thread_sleep_for(10);
     }
 }
