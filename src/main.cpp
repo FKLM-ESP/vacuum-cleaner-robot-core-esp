@@ -310,7 +310,7 @@ int main()
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
         {
             sendIMU(&socket, &imu);
-            printf("X: %d\tY: %d\tZ: %d\tVel_x: %2.4f\tVel_y: %2.4f\tVel_z: %2.4f\tYaw: %2.4f\tPitch: %2.4f\tRoll: %2.4f\n", POS_X, POS_Y, POS_Z, VEL_X, VEL_Y, VEL_Z, YAW, PITCH, ROLL);
+            //printf("X: %d\tY: %d\tZ: %d\tVel_x: %2.4f\tVel_y: %2.4f\tVel_z: %2.4f\tYaw: %2.4f\tPitch: %2.4f\tRoll: %2.4f\n", POS_X, POS_Y, POS_Z, VEL_X, VEL_Y, VEL_Z, YAW, PITCH, ROLL);
             timerImu.reset();
         }
         if (std::chrono::duration<float>{timerCoordinates.elapsed_time()}.count() >= 10.0)

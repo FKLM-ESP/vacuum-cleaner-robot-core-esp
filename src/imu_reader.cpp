@@ -15,7 +15,7 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
     BMI160::SensorTime sensorTime;
 
     // Calculate IMU pose with respect to the ground
-    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_2G, (BMI160::GyroRange)(0));
+    imu->getGyroAccXYZandSensorTime(accData, gyroData, sensorTime, BMI160::SENS_4G, (BMI160::GyroRange)(0));
     imu->getMagSensorXYZ(magData);
 
     float Rx = accData.xAxis.scaled / 2 * GRAVITY;
@@ -102,65 +102,75 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
         Ry_gyro = sin(Ayz) / sqrt(1 + pow(cos(Ayz), 2) * pow(tan(Axz), 2));
         Rz_gyro = ((Rz_est_old >= 0) ? 1 : -1) * sqrt(1 - pow(Rx_gyro, 2) - pow(Ry_gyro, 2));
 
-        // guide says something between 5 and 20, means how much you trust the gyro
-        float w_gyro = 15;
-
-        // estimate accelerations in the IMU frame of reference
-        Rx_est = (Rx + Rx_gyro * w_gyro) / (1 + w_gyro);
-        Ry_est = (Ry + Ry_gyro * w_gyro) / (1 + w_gyro);
-        Rz_est = (Rz + Rz_gyro * w_gyro) / (1 + w_gyro);
-
-        Rx_est_old = Rx_est;
-        Ry_est_old = Ry_est;
-        Rz_est_old = Rz_est;
-
-        // Project accelerations into global frame of reference (is it necessary???)
-        Accx_glob = Rx_est *  cos(Axy) * cos(Ayz)
-                    + Ry_est * (cos(Axy) * sin(Ayz) * sin(Axz) - sin(Axy) * cos(Axz))
-                     + Rz_est * (cos(Axy) * sin(Ayz) * cos(Axz) + sin(Axy) * sin(Axz));
-        Accy_glob =  Rx_est * sin(Axy) * cos(Ayz)
-                    + Ry_est * (sin(Axy) * sin(Ayz) * sin(Axz) + cos(Axy) * cos(Axz))
-                    + Rz_est * (sin(Axy) * sin(Ayz) * cos(Axz) - cos(Axy) * sin(Axz));
-        Accz_glob = Rx_est * sin(Ayz)
-                    + Ry_est * cos(Ayz) * sin(Axz)
-                    + Rz_est * GRAVITY_MULTIPLIER * cos(Ayz) * cos(Axz);
-
-        // otherwise
-        // Accx_glob = Rx_est;
-        // Accy_glob = Ry_est;
-        // Accz_glob = Rz_est;
-
-
-        // double integrate to get new velocity and acceleration
-        new_vel[0] = VEL_X + Accx_glob * delta_s;
-        new_vel[1] = VEL_Y + Accy_glob * delta_s;
-        new_vel[2] = VEL_Z + (Accz_glob - R) * delta_s;
-
-        new_pos[0] = POS_X + new_vel[0] * delta_s;
-        new_pos[1] = POS_Y + new_vel[1] * delta_s;
-        new_pos[2] = POS_Z + new_vel[2] * delta_s;
-
-        // _0 values are subtracted to keep yaw, pitch and roll equal to zero in the initial condition
-        new_or[0] = Axy - Axy_0;
+         new_or[0] = YAW + (gyroData.zAxis.scaled / 180 * PI * delta_s);
         // Keep it in range. We don't care for pitch and roll (if imu is flat enough on the robot)
         if (new_or[0] > 6.28319)
         {
-            new_or[0] -= 6.28319;
+          new_or[0] -= 6.28319;
         }
         else if (new_or[0] < 0)
         {
-            new_or[0] += 6.28319;
+          new_or[0] += 6.28319;
         }
-        new_or[1] = Ayz - Ayz_0;
-        new_or[2] = Axz - Axz_0;
+        new_or[1] = PITCH - (gyroData.xAxis.scaled / 180 * PI * delta_s);
+        new_or[2] = ROLL + (gyroData.yAxis.scaled / 180 * PI * delta_s);
 
-        // printf("Acc_x: %2.4f\tAcc_y: %2.4f\tAcc_z: %2.4f\n", accData.xAxis.scaled * GRAVITY_MULTIPLIER, accData.yAxis.scaled * GRAVITY_MULTIPLIER, accData.zAxis.scaled * GRAVITY_MULTIPLIER);
+        if (Rx_gyro == Rx_gyro && Ry_gyro == Ry_gyro && Rz_gyro == Rz_gyro)
+        {
+            // guide says something between 5 and 20, means how much you trust the gyro
+            float w_gyro = 15;
 
+            // estimate accelerations in the IMU frame of reference
+            Rx_est = (Rx + Rx_gyro * w_gyro) / (1 + w_gyro);
+            Ry_est = (Ry + Ry_gyro * w_gyro) / (1 + w_gyro);
+            Rz_est = (Rz + Rz_gyro * w_gyro) / (1 + w_gyro);
+
+            Rx_est_old = Rx_est;
+            Ry_est_old = Ry_est;
+            Rz_est_old = Rz_est;
+
+            // // Project accelerations into global frame of reference (is it necessary???)
+            // Accx_glob = Rx_est *  cos(Axy) * cos(Ayz)
+            //             + Ry_est * (cos(Axy) * sin(Ayz) * sin(Axz) - sin(Axy) * cos(Axz))
+            //             + Rz_est * (cos(Axy) * sin(Ayz) * cos(Axz) + sin(Axy) * sin(Axz));
+            // Accy_glob =  Rx_est * sin(Axy) * cos(Ayz)
+            //             + Ry_est * (sin(Axy) * sin(Ayz) * sin(Axz) + cos(Axy) * cos(Axz))
+            //             + Rz_est * (sin(Axy) * sin(Ayz) * cos(Axz) - cos(Axy) * sin(Axz));
+            // Accz_glob = Rx_est * sin(Ayz)
+            //             + Ry_est * cos(Ayz) * sin(Axz)
+            //             + Rz_est * cos(Ayz) * cos(Axz);
+
+            // Project accelerations into global frame of reference (is it necessary???)
+            Accx_glob = Rx_est *  cos(YAW) * cos(PITCH)
+                        + Ry_est * (cos(YAW) * sin(PITCH) * sin(ROLL) - sin(YAW) * cos(ROLL))
+                        + Rz_est * (cos(YAW) * sin(PITCH) * cos(ROLL) + sin(YAW) * sin(ROLL));
+            Accy_glob =  Rx_est * sin(YAW) * cos(PITCH)
+                        + Ry_est * (sin(YAW) * sin(PITCH) * sin(ROLL) + cos(YAW) * cos(ROLL))
+                        + Rz_est * (sin(YAW) * sin(PITCH) * cos(ROLL) - cos(YAW) * sin(ROLL));
+            Accz_glob = Rx_est * sin(PITCH)
+                        + Ry_est * cos(PITCH) * sin(ROLL)
+                        + Rz_est * cos(PITCH) * cos(ROLL);
+            // otherwise
+            // Accx_glob = Rx_est;
+            // Accy_glob = Ry_est;
+            // Accz_glob = Rz_est;
+
+
+            // double integrate to get new velocity and acceleration
+            new_vel[0] = VEL_X + 100 * Accx_glob * delta_s;
+            new_vel[1] = VEL_Y + 100 * Accy_glob * delta_s;
+            new_vel[2] = VEL_Z + 100 * (Accz_glob - 1.54) * delta_s;
+
+            new_pos[0] = POS_X + new_vel[0] * delta_s;
+            new_pos[1] = POS_Y + new_vel[1] * delta_s;
+            new_pos[2] = POS_Z + new_vel[2] * delta_s;
+        }
+       
         memcpy(position_3d, new_pos, sizeof(int) * 3);
         memcpy(velocity_3d, new_vel, sizeof(float) * 3);
         memcpy(orientation_3d, new_or, sizeof(float) * 3);
 
         // Very low speed so 5ms _should_ be enough
-        thread_sleep_for(10);
+        thread_sleep_for(5);
     }
 }
