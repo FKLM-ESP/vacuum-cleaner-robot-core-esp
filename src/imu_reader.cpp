@@ -58,14 +58,9 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
     float Accx_glob, Accy_glob, Accz_glob;
 
     // calculated output vectors
-    int * new_pos;
-    float * new_vel;
-    float * new_or;
-
-    // old vectors to free them later
-    int * old_pos;
-    float * old_vel;
-    float * old_or;
+    int new_pos[3];
+    float new_vel[3];
+    float new_or[3];
 
     Timer timer;
     timer.start();
@@ -77,11 +72,6 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
 
     while (true)
     {
-
-        new_pos = (int *)malloc(sizeof(int) * 3);
-        new_vel = (float *)malloc(sizeof(float) * 3);
-        new_or = (float *)malloc(sizeof(float) * 3);
-
         new_time = std::chrono::high_resolution_clock::now();
         delta_s = (std::chrono::duration<float>(new_time - last_time)).count();
 
@@ -174,20 +164,12 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
             new_pos[0] = POS_X + new_vel[0] * delta_s;
             new_pos[1] = POS_Y + new_vel[1] * delta_s;
             new_pos[2] = POS_Z + new_vel[2] * delta_s;
-
-            old_vel = velocity_3d;
-            velocity_3d = new_vel;
-            free(old_vel);
-
-            old_pos = position_3d;
-            position_3d = new_pos;
-            free(old_pos);
         }
-
-        old_or = orientation_3d;
-        orientation_3d = new_or;
-        free(old_or);
        
+        memcpy(position_3d, new_pos, sizeof(int) * 3);
+        memcpy(velocity_3d, new_vel, sizeof(float) * 3);
+        memcpy(orientation_3d, new_or, sizeof(float) * 3);
+
         // Very low speed so 5ms _should_ be enough
         thread_sleep_for(5);
     }

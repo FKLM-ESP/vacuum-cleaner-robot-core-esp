@@ -47,6 +47,8 @@ DigitalOut led_test(LED2);
 DigitalOut led_fan(PA_10);
 
 // Global variables
+bool is_connected;
+
 int currentCoordsSize;
 int *coords;
 
@@ -171,24 +173,45 @@ int main()
     timerCoordinates.start();
     timerBatteries.start();
 
-    // // not reused, can be a variable
+    // not reused, can be a variable
     Thread imu_reader_thread; 
-    // // reused, need to be pointers that are allocated every time
+    // reused, need to be pointers that are allocated every time
     Thread *auto_mode_thread = NULL;
     Thread *wifi_connector_thread = NULL;
-    //Thread *socket_connector_thread = NULL;
 
     // Start imu reading thread
     imu_reader_thread.start(callback(imu_read_and_update_coords, &imu));
-
-    // Start auto mode thread
-    // auto_mode_thread = new Thread;
-    // auto_mode_thread->start(autoClean);
 
     sendLog(&socket, "Starting main loop");
 
     while (true)
     {
+        // Check for wifi connection, if not connected and thread not running start it
+        if (wifi_connector_thread != NULL &&
+            (wifi_connector_thread->get_state() == rtos::Thread::State::Deleted ||
+            wifi_connector_thread->get_state() == rtos::Thread::State::Inactive) )
+        {
+            wifi_connector_thread->terminate();
+            delete wifi_connector_thread;
+            wifi_connector_thread = NULL;
+        }
+
+        // Reuse battery timer to avoid continuous connection attempts
+        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
+            wifi_connector_thread == NULL &&
+            (wifi.get_connection_status() < 0 ||
+            wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
+        {
+            wifi_connector_thread = new Thread;
+            wifi_connector_thread->start(connect_to_wifi);
+        }
+
+        // check if socket is still alive
+        if (!is_connected)
+        {
+            connect_to_socket();
+        }
+
         readCommand(&socket);
         //handle mode changes first
         if (current_mode != new_mode)
@@ -265,46 +288,6 @@ int main()
             }
             break;
         }
-
-        // Check for wifi connection, if not connected and thread not running start it
-        if (wifi_connector_thread != NULL &&
-            (wifi_connector_thread->get_state() == rtos::Thread::State::Deleted ||
-            wifi_connector_thread->get_state() == rtos::Thread::State::Inactive) )
-        {
-            wifi_connector_thread->terminate();
-            delete wifi_connector_thread;
-            wifi_connector_thread = NULL;
-        }
-
-        // Reuse battery timer to avoid continuous connection attempts
-        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
-            wifi_connector_thread == NULL &&
-            (wifi.get_connection_status() < 0 ||
-            wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
-        {
-            wifi_connector_thread = new Thread;
-            wifi_connector_thread->start(connect_to_wifi);
-        }
-
-        // // Check for socket connection, if not connected and thread not running start it
-        // if (socket_connector_thread != NULL &&
-        //     (socket_connector_thread->get_state() == rtos::Thread::State::Deleted ||
-        //     socket_connector_thread->get_state() == rtos::Thread::State::Inactive) )
-        // {
-        //     socket_connector_thread->terminate();
-        //     delete socket_connector_thread;
-        //     socket_connector_thread = NULL;
-        // }
-
-        // // Reuse battery timer to avoid continuous connection attempts
-        // if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
-        //     socket_connector_thread == NULL &&
-        //     wifi.get_connection_status() >= 0 &&
-        //     wifi.get_connection_status() != NSAPI_STATUS_DISCONNECTED)
-        // {
-        //     socket_connector_thread = new Thread;
-        //     socket_connector_thread->start(connect_to_socket);
-        // }
 
         // check for timers expiration and send messages
         if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)

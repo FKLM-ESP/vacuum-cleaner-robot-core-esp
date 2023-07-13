@@ -175,8 +175,14 @@ void readCommand(TCPSocket *socket)
     }
     else
     {
-        if (ret != NSAPI_ERROR_WOULD_BLOCK && ret != NSAPI_ERROR_OK)
+        if (ret != NSAPI_ERROR_WOULD_BLOCK)
+        {
             printf("TCP Socket closed with error, %d\n", ret);
+            if (ret == NSAPI_ERROR_OK)
+            {
+                is_connected = false;
+            }
+        }
     }
 
 }

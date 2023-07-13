@@ -35,7 +35,7 @@ void autoClean()
         {
             //sendLog(&socket, "CurrentCoordSize = " + std::to_string(currentCoordsSize));
             //sendLog(&socket, "Detected obstacle, STOPping");
-            printf("Detected obstacle, STOPping\n");
+            printf("Detected obstacle, Stopping\n");
 
             new_movement_state = STATE_STOP;
 

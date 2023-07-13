@@ -25,8 +25,11 @@ bool connect_to_socket()
     nsapi_error_t ret = socket.connect(a);
 
     if (ret == NSAPI_ERROR_OK && ret != NSAPI_ERROR_IS_CONNECTED)
-    {
+    {   
+        //int buf_length = 0;
         socket.set_blocking(false);
+        //socket.setsockopt(NSAPI_SOCKET, NSAPI_RCVBUF, &buf_length, sizeof buf_length);
+        is_connected = true;
         printf("Connected to socket!\r\n\r\n");
     }
     else if (ret != NSAPI_ERROR_IS_CONNECTED)
