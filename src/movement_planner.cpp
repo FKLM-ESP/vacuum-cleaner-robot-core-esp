@@ -14,30 +14,26 @@
 
 void autoClean()
 {
+    static bool handling_obstacle = false; // TODO: are we sure about this?
     float right_sensor;
     float left_sensor;
+    
 
-    if (current_movement_state == STATE_STOP)
+    if (!handling_obstacle)
     {
         new_movement_state = STATE_FORWARD;
-    }
 
-    while (true)
-    {
         right_sensor = sensor_1.distance();
         thread_sleep_for(50);
         left_sensor = sensor_2.distance();
 
         // collision "imminent"
         if (right_sensor < DISTANCE_SENSOR_THRESH 
-            || left_sensor < DISTANCE_SENSOR_THRESH
-        )
+            || left_sensor < DISTANCE_SENSOR_THRESH)
         {
             //sendLog(&socket, "CurrentCoordSize = " + std::to_string(currentCoordsSize));
             //sendLog(&socket, "Detected obstacle, STOPping");
             printf("Detected obstacle, Stopping\n");
-
-            new_movement_state = STATE_STOP;
 
             // Save current coordinates to memory
             if (currentCoordsSize + 2 <= 128)
@@ -50,7 +46,7 @@ void autoClean()
             // Randomly determine new target heading, between approx. [85, 275] deg
             float rotation_amount = 1.5 + (rand() / (RAND_MAX / (4.8 - 1.5)));
             //sendLog(&socket, "Selected rotation amount");
-            float target_yaw = YAW + rotation_amount;
+            target_yaw = YAW + rotation_amount;
             if (target_yaw > 6.28319)
             {
                 target_yaw -= 6.28319;
@@ -68,24 +64,20 @@ void autoClean()
                                         STATE_LEFT : 
                                         STATE_RIGHT;
 
-            // Wait until YAW is closer than +- YAW_TARGET_THRASH to target_yaw
-            while (target_yaw - YAW_TARGET_THRESH > YAW ||
-                   target_yaw + YAW_TARGET_THRESH < YAW) 
-            {
-                thread_sleep_for(10);
-            }
-
+            handling_obstacle = true;
+        }
+    }
+    else
+    {
+        // Wait until YAW is closer than +- YAW_TARGET_THRASH to target_yaw
+        if (target_yaw - YAW_TARGET_THRESH < YAW &&
+                target_yaw + YAW_TARGET_THRESH > YAW) 
+        {
             //sendLog(&socket, "Reached target heading, STOPping rotation, moving FORWARD");
             printf("Reached target heading, STOPping rotation, moving FORWARD");
             new_movement_state = STATE_STOP;
+            handling_obstacle = false;
+        }
 
-            // Give time for main to actually stop the motors
-            // TODO: check if there are minimum requirements for the motors
-            thread_sleep_for(50);
-
-            new_movement_state = STATE_FORWARD;
-        } // end of collision detection if
-
-        thread_sleep_for(250);
-    } // end of infinite loop
+    }
 }

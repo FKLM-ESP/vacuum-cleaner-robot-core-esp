@@ -58,6 +58,7 @@ float *orientation_3d;
 
 control_mode current_mode;
 control_mode new_mode;
+float target_yaw;
 bool fan_state;
 uint8_t current_movement_state;
 uint8_t new_movement_state;
@@ -150,26 +151,6 @@ int main()
      * START OF IMPLEMENTATION AREA
      ***********************************************************************************/
 
-    /*
-        Missing:
-            - start imu reading thread, will be responsible from reading values and updating position_3d and orientation_3d
-            - start auto mode thread, if "too cumbersome" to be handled in the main loop
-                Pro thread
-                    less logic in main
-                    faster reaction (maybe)
-                Pro no-thread
-                    easier to handle, not starting and stopping threads
-                    we don't really care about speed
-
-        The loop will be responsible for
-            - handling the transition between automatic and manual modes (=starting and stopping the auto mode thread)
-            - periodically sending data to the app, with different periods (different timers) depending on the importance and velocity
-                (e.g. imu every second, coordinates every 10 seconds, battery every 20 seconds)
-            - if we want to handle wifi and socket reconnection
-                MUST use separate threads for this, connection is very slow
-            - set motor controller state
-    */
-
 #if 1
     Timer timerImuMove, timerImuSend, timerCoordinates, timerBatteries;
     timerImuMove.start();
@@ -177,32 +158,23 @@ int main()
     timerCoordinates.start();
     timerBatteries.start();
 
-    // reused, need to be pointers that are allocated every time
-    Thread *auto_mode_thread = NULL;
-    Thread *wifi_connector_thread = NULL;
-
     sendLog(&socket, "Starting main loop");
 
     while (true)
     {
-        // Check for wifi connection, if not connected and thread not running start it
-        if (wifi_connector_thread != NULL &&
-            (wifi_connector_thread->get_state() == rtos::Thread::State::Deleted ||
-            wifi_connector_thread->get_state() == rtos::Thread::State::Inactive) )
-        {
-            wifi_connector_thread->terminate();
-            delete wifi_connector_thread;
-            wifi_connector_thread = NULL;
-        }
-
+        // Make sure that wifi is reestablished if lost
         // Reuse battery timer to avoid continuous connection attempts
         if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
-            wifi_connector_thread == NULL &&
             (wifi.get_connection_status() < 0 ||
             wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
         {
-            wifi_connector_thread = new Thread;
-            wifi_connector_thread->start(connect_to_wifi);
+            if (0 == connect_to_wifi())
+            {
+                while (!is_connected)
+                {
+                    connect_to_socket();
+                }
+            }
         }
 
         // check if socket is still alive
@@ -213,7 +185,7 @@ int main()
 
         readCommand(&socket);
 
-        // Don't update coordinates too often, so that loop is not overwhelmed
+        // Don't update coordinates too often, the tcp socket is very fragile
         if (std::chrono::duration<float>{timerImuMove.elapsed_time()}.count() >= 0.005)
         {
             imu_read_and_update_coords(&imu);
@@ -225,11 +197,6 @@ int main()
         {
             if (current_mode == automatic)
             {
-                // Stop auto thread
-                auto_mode_thread->terminate();
-                delete auto_mode_thread;
-                auto_mode_thread = NULL;
-
                 // Set new_movement_state and current_movement_state to STATE_STOP
                 new_movement_state = STATE_STOP;
 
@@ -242,11 +209,10 @@ int main()
             if (new_mode == automatic)
             {
                 // Set new_movement_state and current_movement_state to STATE_STOP
-                new_movement_state = STATE_STOP;
-
-                // Start auto thread
-                auto_mode_thread = new Thread;
-                auto_mode_thread->start(autoClean);
+                // new_movement_state = STATE_STOP;
+                controller.stop();
+                thread_sleep_for(50);
+                current_movement_state = STATE_STOP;
 
                 // Turn on the fan
                 led_fan = 1;
@@ -271,17 +237,49 @@ int main()
         case test:
             run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, false, &led_test, &led_fan);
             new_mode = manual;
+            sendLog(&socket, "Changed mode to manual");
             break;
 
         case manual:
             led_fan = (fan_state) ? 1 : 0;
-            // fallthrough
-        case automatic:
             if (current_movement_state != new_movement_state)
             {
                 // not a case because of int flags already appearing according to the compiler
                 if (new_movement_state == STATE_STOP)
                     controller.stop();
+                if (new_movement_state == STATE_FORWARD)
+                    controller.moveForward();
+                if (new_movement_state == STATE_BACKWARD)
+                    controller.moveBackwards();
+                if (new_movement_state == STATE_LEFT)
+                    controller.rotateLeft();
+                if (new_movement_state == STATE_RIGHT)
+                    controller.rotateRight();
+
+                current_movement_state = new_movement_state;
+            }
+            break;
+        case automatic:
+            autoClean();
+
+            // Check if movement state has been changed
+            if (current_movement_state != new_movement_state)
+            {
+                // Make sure the motors are stopped before new direction movement is started
+                if (current_movement_state != STATE_STOP && new_movement_state != STATE_STOP)
+                {
+                    controller.stop();
+                    // Give time for main to actually stop the motors
+                    // TODO: check if there are minimum requirements for the motors
+                    thread_sleep_for(50);
+                }
+
+                // not a case because of int flags already appearing according to the compiler
+                if (new_movement_state == STATE_STOP)
+                {
+                    controller.stop();
+                    thread_sleep_for(50);
+                }
                 if (new_movement_state == STATE_FORWARD)
                     controller.moveForward();
                 if (new_movement_state == STATE_BACKWARD)

@@ -77,6 +77,7 @@ extern float *orientation_3d;
 
 extern control_mode new_mode; // controlled from the ui app to signal to the main loop to chenge current mode
 extern control_mode current_mode;
+extern float target_yaw;
 extern bool fan_state;
 extern uint8_t current_movement_state;
 extern uint8_t new_movement_state;
