@@ -47,7 +47,7 @@ DigitalOut led_test(LED2);
 DigitalOut led_fan(PA_10);
 
 // Global variables
-bool is_connected;
+bool is_connected = false;
 
 int currentCoordsSize;
 int *coords;
@@ -114,7 +114,10 @@ int main()
 
     if (0 == connect_to_wifi())
     {
-        connect_to_socket();
+        while (!is_connected)
+        {
+            connect_to_socket();
+        }
     }
 
     /***********************************************************************************
@@ -168,19 +171,15 @@ int main()
     */
 
 #if 1
-    Timer timerImu, timerCoordinates, timerBatteries;
-    timerImu.start();
+    Timer timerImuMove, timerImuSend, timerCoordinates, timerBatteries;
+    timerImuMove.start();
+    timerImuSend.start();
     timerCoordinates.start();
     timerBatteries.start();
 
-    // not reused, can be a variable
-    Thread imu_reader_thread; 
     // reused, need to be pointers that are allocated every time
     Thread *auto_mode_thread = NULL;
     Thread *wifi_connector_thread = NULL;
-
-    // Start imu reading thread
-    imu_reader_thread.start(callback(imu_read_and_update_coords, &imu));
 
     sendLog(&socket, "Starting main loop");
 
@@ -207,12 +206,20 @@ int main()
         }
 
         // check if socket is still alive
-        if (!is_connected)
+        while (!is_connected)
         {
             connect_to_socket();
         }
 
         readCommand(&socket);
+
+        // Don't update coordinates too often, so that loop is not overwhelmed
+        if (std::chrono::duration<float>{timerImuMove.elapsed_time()}.count() >= 0.005)
+        {
+            imu_read_and_update_coords(&imu);
+            timerImuMove.reset();
+        }
+
         //handle mode changes first
         if (current_mode != new_mode)
         {
@@ -290,11 +297,12 @@ int main()
         }
 
         // check for timers expiration and send messages
-        if (std::chrono::duration<float>{timerImu.elapsed_time()}.count() >= 1.0)
+        if (std::chrono::duration<float>{timerImuSend.elapsed_time()}.count() >= 1.0)
         {
+            //TODO: same values as in IMU read should be used here
             sendIMU(&socket, &imu);
             //printf("X: %d\tY: %d\tZ: %d\tVel_x: %2.4f\tVel_y: %2.4f\tVel_z: %2.4f\tYaw: %2.4f\tPitch: %2.4f\tRoll: %2.4f\n", POS_X, POS_Y, POS_Z, VEL_X, VEL_Y, VEL_Z, YAW, PITCH, ROLL);
-            timerImu.reset();
+            timerImuSend.reset();
         }
         if (std::chrono::duration<float>{timerCoordinates.elapsed_time()}.count() >= 10.0)
         {
