@@ -75,7 +75,7 @@ extern float *velocity_3d;
 // in radians?
 extern float *orientation_3d;
 
-extern control_mode new_mode; // controlled from the ui app to signal to the main loop to chenge current mode
+extern control_mode new_mode; // controlled from the ui app to signal to the main loop to change current mode
 extern control_mode current_mode;
 extern float target_yaw;
 extern bool fan_state;

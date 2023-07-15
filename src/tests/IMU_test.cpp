@@ -1,6 +1,6 @@
 #include "IMU_test.h"
 
-int test_imu(BMI160_I2C bmx)
+int testIMU(BMI160_I2C bmx)
 {   
     bool imu_works = false;
 

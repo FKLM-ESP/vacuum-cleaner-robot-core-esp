@@ -9,11 +9,14 @@ class Ultrasonic
 public:
     Ultrasonic(DigitalOut t, DigitalIn e);
 
+    // use sensor
     float echo_duration();
+
+    // calculate distance based on duration
     float distance();
 
 private:
-    // Note: Causes warnings about deprecation, probably should fix that at some point
+    // Note: Causes warnings about deprecation
     DigitalOut trig;
     DigitalIn echo;
     Timer timer;

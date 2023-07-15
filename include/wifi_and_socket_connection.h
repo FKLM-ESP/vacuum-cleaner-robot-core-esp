@@ -2,5 +2,7 @@
 #include "mbed.h"
 #include "variables.h"
 
-int connect_to_wifi();
-bool connect_to_socket();
+// Connect robot to Wi-Fi
+int connectWifi();
+// Connect robot to UI app socket 
+bool connectSocket();

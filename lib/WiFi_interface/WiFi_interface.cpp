@@ -110,18 +110,9 @@ void sendIMU(TCPSocket *socket, BMI160_I2C *imu)
     imuMsg[35] = acc_z >> 8;
     imuMsg[36] = acc_z;
 
-    
-    // printf("GYRO xAxis (dps) = %5.1f\n", gyroData.xAxis.scaled / 180 * PI);
-    // printf("GYRO yAxis (dps) = %5.1f\n", gyroData.yAxis.scaled / 180 * PI);
-    // printf("GYRO zAxis (dps) = %5.1f\n\n", gyroData.zAxis.scaled / 180 * PI);
-
     socket->send(imuMsg, sizeof imuMsg);
 }
 
-/**
- * Function to launch in a separate thread. Keeps an infinite loop reading all incoming
- * commands from the UI app and acting accordingly
- */
 void readCommand(TCPSocket *socket)
 {
     // Should only receive messages one byte long
@@ -178,6 +169,8 @@ void readCommand(TCPSocket *socket)
         if (ret != NSAPI_ERROR_WOULD_BLOCK)
         {
             printf("TCP Socket closed with error, %d\n", ret);
+
+            // This error is gotten when recv is not blocking and socket is not connected
             if (ret == NSAPI_ERROR_OK)
             {
                 is_connected = false;

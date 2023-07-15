@@ -1,4 +1,5 @@
 #include "mbed.h"
 #include "Ultrasonic.h"
 
-int test_ultrasonic(Ultrasonic sensor);
+// Test ultrasonic manually by checking whether it detects an obstacle 5cm in front of it
+int testUltrasonic(Ultrasonic sensor);

@@ -1,6 +1,6 @@
 #include "Ultrasonic_test.h"
 
-int test_ultrasonic(Ultrasonic sensor)
+int testUltrasonic(Ultrasonic sensor)
 {
     for(int i = 0; i < 5; i++)
     {    

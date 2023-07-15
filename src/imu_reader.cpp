@@ -38,17 +38,12 @@ int new_pos[3];
 float new_vel[3];
 float new_or[3];
 
-std::chrono::_V2::system_clock::time_point last_time = std::chrono::high_resolution_clock::now(); // MAKE SURE THIS WORKS!
+std::chrono::_V2::system_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 std::chrono::_V2::system_clock::time_point new_time;
 float delta_s;
 
-/**
- * This function will be launched in a thread at the beginnin of main()
- * It will enter an infinite loop, in which it will read values from the imu and
- *     update current position and orientation.
- */
 
-void imu_read_and_update_coords(BMI160_I2C *imu)
+void updatePosAndOrientation(BMI160_I2C *imu)
 {
   new_time = std::chrono::high_resolution_clock::now();
   delta_s = (std::chrono::duration<float>(new_time - last_time)).count();
@@ -107,17 +102,6 @@ void imu_read_and_update_coords(BMI160_I2C *imu)
       Rx_est_old = Rx_est;
       Ry_est_old = Ry_est;
       Rz_est_old = Rz_est;
-
-      // // Project accelerations into global frame of reference (is it necessary???)
-      // Accx_glob = Rx_est *  cos(Axy) * cos(Ayz)
-      //             + Ry_est * (cos(Axy) * sin(Ayz) * sin(Axz) - sin(Axy) * cos(Axz))
-      //             + Rz_est * (cos(Axy) * sin(Ayz) * cos(Axz) + sin(Axy) * sin(Axz));
-      // Accy_glob =  Rx_est * sin(Axy) * cos(Ayz)
-      //             + Ry_est * (sin(Axy) * sin(Ayz) * sin(Axz) + cos(Axy) * cos(Axz))
-      //             + Rz_est * (sin(Axy) * sin(Ayz) * cos(Axz) - cos(Axy) * sin(Axz));
-      // Accz_glob = Rx_est * sin(Ayz)
-      //             + Ry_est * cos(Ayz) * sin(Axz)
-      //             + Rz_est * cos(Ayz) * cos(Axz);
 
       // Project accelerations into global frame of reference (is it necessary???)
       Accx_glob = Rx_est *  cos(YAW) * cos(PITCH)

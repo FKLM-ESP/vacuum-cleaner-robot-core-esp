@@ -1,15 +1,17 @@
 /*
  * Copyright (c) 2006-2020 Arm Limited and affiliates.
  * SPDX-License-Identifier: Apache-2.0
+ * 
+ * Wi-Fi example from https://os.mbed.com/docs/mbed-os/v6.16/apis/wi-fi.html
  */
 #include "mbed.h"
 #include "TCPSocket.h"
 #include "ESP8266Interface.h"
 
-#define SSID "FilipS22"
+#define SSID "ExtRouter"
 #define PASSWORD "easy-p@ss87"
 
-const char *sec2str(nsapi_security_t sec);
-void scan_demo(WiFiInterface *wifi);
-void http_demo(NetworkInterface *net);
-int test_wifi(ESP8266Interface *wifi);
+// Send http request and expect response
+void httpDemo(NetworkInterface *net);
+// Test wifi by sending a http request and getting a response
+int testWifi(ESP8266Interface *wifi);

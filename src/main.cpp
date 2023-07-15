@@ -47,7 +47,7 @@ DigitalOut led_test(LED2);
 DigitalOut led_fan(PA_10);
 
 // Global variables
-bool is_connected = false;
+bool is_connected;
 
 int currentCoordsSize;
 int *coords;
@@ -65,6 +65,8 @@ uint8_t new_movement_state;
 
 int main()
 {
+    printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+
     // Global variable allocation
     coords = (int *)malloc(sizeof(int) * MAX_COORDS);
     coords[0] = 0;
@@ -84,13 +86,15 @@ int main()
     orientation_3d[1] = 0;
     orientation_3d[2] = 0;
 
+    is_connected = false;
     fan_state = false;
     current_movement_state = STATE_STOP;
     new_movement_state = STATE_STOP;
     current_mode = manual;
     new_mode = manual;
 
-    printf("This is the vacuum cleaner core running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
+    // Allocate timers
+    Timer timer_imu_move, timer_imu_send, timer_coordinates, timer_battery;
 
     // Setup
     imu_i2c.frequency(400000);
@@ -111,52 +115,21 @@ int main()
         printf("Failed to start fast calibration.\n");
     }
 
-    // run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, true, &led_test, &led_fan);
-
-    if (0 == connect_to_wifi())
+    // connect to wifi
+    if (0 == connectWifi())
     {
+        // try acquiring socket
         while (!is_connected)
         {
-            connect_to_socket();
+            connectSocket();
         }
     }
 
-    /***********************************************************************************
-     * TEST AREA
-     ***********************************************************************************/
-
-    // Timer timer;
-    // timer.start();
-
-    // while (true)
-    // {
-    //     // send battery level, coordinates and IMU data every 1 second
-    //     if (std::chrono::duration<float>{timer.elapsed_time()}.count() >= 0.5)
-    //     {
-    //         sendBattery(&socket, &battery_reader);
-
-    //         // sendLog(&socket, "Test");
-
-    //         sendCoordinates(&socket);
-
-    //         sendIMU(&socket, &imu);
-
-    //         timer.reset();
-            
-    //     }
-    // }
-
-    /***********************************************************************************
-     * END OF TEST AREA
-     * START OF IMPLEMENTATION AREA
-     ***********************************************************************************/
-
-#if 1
-    Timer timerImuMove, timerImuSend, timerCoordinates, timerBatteries;
-    timerImuMove.start();
-    timerImuSend.start();
-    timerCoordinates.start();
-    timerBatteries.start();
+    // Start timers
+    timer_imu_move.start();
+    timer_imu_send.start();
+    timer_coordinates.start();
+    timer_battery.start();
 
     sendLog(&socket, "Starting main loop");
 
@@ -164,15 +137,15 @@ int main()
     {
         // Make sure that wifi is reestablished if lost
         // Reuse battery timer to avoid continuous connection attempts
-        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0 &&
+        if (std::chrono::duration<float>{timer_battery.elapsed_time()}.count() >= 20.0 &&
             (wifi.get_connection_status() < 0 ||
             wifi.get_connection_status() == NSAPI_STATUS_DISCONNECTED) )
         {
-            if (0 == connect_to_wifi())
+            if (0 == connectWifi())
             {
                 while (!is_connected)
                 {
-                    connect_to_socket();
+                    connectSocket();
                 }
             }
         }
@@ -180,16 +153,16 @@ int main()
         // check if socket is still alive
         while (!is_connected)
         {
-            connect_to_socket();
+            connectSocket();
         }
 
         readCommand(&socket);
 
         // Don't update coordinates too often, the tcp socket is very fragile
-        if (std::chrono::duration<float>{timerImuMove.elapsed_time()}.count() >= 0.005)
+        if (std::chrono::duration<float>{timer_imu_move.elapsed_time()}.count() >= 0.005)
         {
-            imu_read_and_update_coords(&imu);
-            timerImuMove.reset();
+            updatePosAndOrientation(&imu);
+            timer_imu_move.reset();
         }
 
         //handle mode changes first
@@ -197,7 +170,6 @@ int main()
         {
             if (current_mode == automatic)
             {
-                // Set new_movement_state and current_movement_state to STATE_STOP
                 new_movement_state = STATE_STOP;
 
                 // Turn off the fan
@@ -208,10 +180,10 @@ int main()
 
             if (new_mode == automatic)
             {
-                // Set new_movement_state and current_movement_state to STATE_STOP
-                // new_movement_state = STATE_STOP;
                 controller.stop();
+                // Make sure next movement command is not executed immediately
                 thread_sleep_for(50);
+
                 current_movement_state = STATE_STOP;
 
                 // Turn on the fan
@@ -232,10 +204,14 @@ int main()
             current_mode = new_mode;
         }
 
+        // Change robot mode
+        // test = run hardware testing routine once
+        // manual = manual control from UI app
+        // auto = automatic vacuuming mode
         switch (current_mode)
         {
         case test:
-            run_hw_check_routine(imu, controller, sensor_1, sensor_2, &wifi, false, &led_test, &led_fan);
+            runHwCheckRoutine(imu, controller, sensor_1, sensor_2, &wifi, false, &led_test, &led_fan);
             new_mode = manual;
             sendLog(&socket, "Changed mode to manual");
             break;
@@ -244,7 +220,6 @@ int main()
             led_fan = (fan_state) ? 1 : 0;
             if (current_movement_state != new_movement_state)
             {
-                // not a case because of int flags already appearing according to the compiler
                 if (new_movement_state == STATE_STOP)
                     controller.stop();
                 if (new_movement_state == STATE_FORWARD)
@@ -260,7 +235,7 @@ int main()
             }
             break;
         case automatic:
-            autoClean();
+            planMovement();
 
             // Check if movement state has been changed
             if (current_movement_state != new_movement_state)
@@ -269,15 +244,14 @@ int main()
                 if (current_movement_state != STATE_STOP && new_movement_state != STATE_STOP)
                 {
                     controller.stop();
-                    // Give time for main to actually stop the motors
-                    // TODO: check if there are minimum requirements for the motors
+                    // Make sure next movement command is not executed immediately
                     thread_sleep_for(50);
                 }
 
-                // not a case because of int flags already appearing according to the compiler
                 if (new_movement_state == STATE_STOP)
                 {
                     controller.stop();
+                    // Make sure next movement command is not executed immediately
                     thread_sleep_for(50);
                 }
                 if (new_movement_state == STATE_FORWARD)
@@ -295,27 +269,25 @@ int main()
         }
 
         // check for timers expiration and send messages
-        if (std::chrono::duration<float>{timerImuSend.elapsed_time()}.count() >= 1.0)
+        if (std::chrono::duration<float>{timer_imu_send.elapsed_time()}.count() >= 1.0)
         {
-            //TODO: same values as in IMU read should be used here
             sendIMU(&socket, &imu);
-            //printf("X: %d\tY: %d\tZ: %d\tVel_x: %2.4f\tVel_y: %2.4f\tVel_z: %2.4f\tYaw: %2.4f\tPitch: %2.4f\tRoll: %2.4f\n", POS_X, POS_Y, POS_Z, VEL_X, VEL_Y, VEL_Z, YAW, PITCH, ROLL);
-            timerImuSend.reset();
+            timer_imu_send.reset();
         }
-        if (std::chrono::duration<float>{timerCoordinates.elapsed_time()}.count() >= 10.0)
+        if (std::chrono::duration<float>{timer_coordinates.elapsed_time()}.count() >= 10.0)
         {
             sendCoordinates(&socket);
-            timerCoordinates.reset();
+            timer_coordinates.reset();
         }
-        if (std::chrono::duration<float>{timerBatteries.elapsed_time()}.count() >= 20.0)
+        if (std::chrono::duration<float>{timer_battery.elapsed_time()}.count() >= 20.0)
         {
             sendBattery(&socket, &battery_reader);
-            timerBatteries.reset();
+            timer_battery.reset();
         }
     }
-#endif // main code
 
     free(coords);
     free(position_3d);
+    free(velocity_3d);
     free(orientation_3d);
 }

@@ -44,4 +44,7 @@ extern std::chrono::_V2::system_clock::time_point last_time;
 extern std::chrono::_V2::system_clock::time_point new_time;
 extern float delta_s;
 
-void imu_read_and_update_coords(BMI160_I2C * imu);
+/**
+ * Read values from the imu and update current position and orientation.
+ */
+void updatePosAndOrientation(BMI160_I2C * imu);

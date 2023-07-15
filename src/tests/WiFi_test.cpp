@@ -1,6 +1,6 @@
 #include "WiFi_test.h"
 
-void http_demo(NetworkInterface *net)
+void httpDemo(NetworkInterface *net)
 {
     // Open a socket on the network interface, and create a TCP connection to mbed.org
     TCPSocket socket;
@@ -24,7 +24,7 @@ void http_demo(NetworkInterface *net)
     socket.close();
 }
 
-int test_wifi(ESP8266Interface *wifi)
+int testWifi(ESP8266Interface *wifi)
 {
     SocketAddress a;
 
@@ -47,7 +47,7 @@ int test_wifi(ESP8266Interface *wifi)
     printf("Gateway: %s\r\n", a.get_ip_address());
     printf("RSSI: %d\r\n\r\n", wifi->get_rssi());
 
-    http_demo(wifi);
+    httpDemo(wifi);
 
     wifi->disconnect();
 

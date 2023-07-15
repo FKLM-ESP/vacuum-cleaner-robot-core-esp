@@ -1,4 +1,5 @@
 #include "Motor_Controller.h"
 #include <chrono>
 
-int test_motor_controller(MotorController contr);
+// test motor controller by moving in all directions
+int testMotorController(MotorController contr);
