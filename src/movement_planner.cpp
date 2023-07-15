@@ -14,7 +14,7 @@
 
 void autoClean()
 {
-    static bool handling_obstacle = false; // TODO: are we sure about this?
+    static bool handling_obstacle = false;
     float right_sensor;
     float left_sensor;
     
