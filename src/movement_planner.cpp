@@ -21,10 +21,13 @@ void planMovement()
             printf("Detected obstacle, Stopping\n");
 
             // Save current coordinates to memory
-            if (currentCoordsSize + 2 <= 128)
+            if (currentCoordsSize + 2 <= MAX_COORDS)
             {
-                coords[currentCoordsSize++] = 95; // POS_X;
-                coords[currentCoordsSize++] = 95; // POS_Y;
+                // These values are currently hardcoded to dummy values, since the calculated ones
+                //    (POS_X and POS_Y) would not be accurate given that our IMU-based position
+                //    tracking is not working properly
+                coords[currentCoordsSize++] = 0; // POS_X;
+                coords[currentCoordsSize++] = 0; // POS_Y;
             }
 
             // Randomly determine new target heading, between approx. [85, 275] deg

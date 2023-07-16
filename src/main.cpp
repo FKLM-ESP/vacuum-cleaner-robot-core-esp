@@ -158,7 +158,6 @@ int main()
 
         readCommand(&socket);
 
-        // Don't update coordinates too often, the tcp socket is very fragile
         if (std::chrono::duration<float>{timer_imu_move.elapsed_time()}.count() >= 0.005)
         {
             updatePosAndOrientation(&imu);

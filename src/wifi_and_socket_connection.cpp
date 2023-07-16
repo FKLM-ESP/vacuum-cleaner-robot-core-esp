@@ -23,7 +23,7 @@ bool connectSocket()
     a.set_port(PORT);
     nsapi_error_t ret = socket.connect(a);
 
-    if (ret == NSAPI_ERROR_OK && ret != NSAPI_ERROR_IS_CONNECTED)
+    if (ret == NSAPI_ERROR_OK)
     {   
         socket.set_blocking(false);
         is_connected = true;
